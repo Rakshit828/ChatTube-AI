@@ -1,0 +1,9 @@
+First, go in the env.py file and import your database models and SQLModel or Base in case of sqlalchemy.
+
+SET THE :   target_metadata = SQLModel.metadata
+
+Set the sqlalchemy.url from your database url like:
+     config.set_main_option('sqlalchemy.url', CONFIG.DATABASE_URL)
+
+Headover to the mako file and do:
+     import sqlmodel
