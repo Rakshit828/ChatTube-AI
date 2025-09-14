@@ -7,6 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from .models import Users
 
+
 auth_service = AuthService()
 
 
@@ -28,14 +29,14 @@ class TokenBearer(HTTPBearer):
 class AccessTokenBearer(TokenBearer):
     def validate_token_mistake(self, token_data: dict):
         if token_data['type'] == 'refresh':
-            raise HTTPException(detail={"error": "Provide access token, not refresh"}, status_code=status.HTTP_401_UNAUTHORIZED)
+            raise HTTPException(detail="Provide access token, not refresh", status_code=status.HTTP_401_UNAUTHORIZED)
         return 
 
 
 class RefreshTokenBearer(TokenBearer):
     def validate_token_mistake(self, token_data: dict):
         if token_data['type'] == 'access':
-            raise HTTPException(detail={"error": "Provide refresh token, not access"}, status_code=status.HTTP_401_UNAUTHORIZED)
+            raise HTTPException(detail="Provide refresh token, not access", status_code=status.HTTP_401_UNAUTHORIZED)
         return
     
 
@@ -46,7 +47,7 @@ async def get_current_user(session: AsyncSession = Depends(get_session), token_d
         return result
 
     raise HTTPException(
-        detail={"msg": "UUID doesnot exist / Invalid UUID"},
+        detail="UUID doesnot exist / Invalid UUID",
         status_code=status.HTTP_404_NOT_FOUND
     )
 
@@ -60,7 +61,7 @@ class RoleChecker:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
-                    "error": "Method not allowed"
+                    "Method not allowed"
                 }
             )
 

@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import LoginPage from "./LoginPage.jsx";
 import SignupPage from "./SignupPage.jsx";
-import { AuthContext } from "../../context/AuthContext.jsx";
+import { AuthContext } from "../context/AuthContext.jsx";
 
 
 const AuthPage = () => {

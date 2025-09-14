@@ -6,6 +6,11 @@ from .models import Users
 from .schemas import UserCreateSchema, UserLogInSchema
 from .utils import generate_password_hash, verify_user, create_jwt_tokens
 
+from .exceptions import (
+    InvalidEmailError, 
+    InvalidPasswordError, 
+    EmailAlreadyExistsError
+)
 
 class AuthService:
 
@@ -30,10 +35,7 @@ class AuthService:
     async def delete_user(self, email: str, session: AsyncSession):
         user = await self.get_user_by_email(email, session)
         if not user:
-            raise HTTPException(
-                detail={"msg": "Email doesnot exist / Invalid Email"},
-                status_code=status.HTTP_404_NOT_FOUND
-            )
+            raise InvalidEmailError()
         
         await session.delete(user)
         await session.commit()
@@ -48,17 +50,14 @@ class AuthService:
         user = await self.get_user_by_email(email, session)
 
         if not user:
-            raise HTTPException(
-                detail={"msg": "Email doesnot exist / Invalid Email"},
-                status_code=status.HTTP_404_NOT_FOUND
-            )
+            raise InvalidEmailError()
         
         password = user_data_dict.get('password')
         hashed_password = user.hashed_password
         is_verified = verify_user(password, hashed_password)
 
         if not is_verified:
-            raise HTTPException(detail={"error": "Invalid password"}, status_code=status.HTTP_401_UNAUTHORIZED)
+            raise InvalidPasswordError()
 
         uuid = user.uuid
         username = user.username
@@ -77,10 +76,7 @@ class AuthService:
         user_exists = await self.get_user_by_email(email, session)
 
         if user_exists:
-            raise HTTPException(
-                detail={"msg": "Email already exists"},
-                status_code=status.HTTP_409_CONFLICT
-            )
+            raise EmailAlreadyExistsError()
         
         password = user_data_dict.get('password')
         hashed_password = generate_password_hash(password)

@@ -1,6 +1,6 @@
 import React from "react";
 
-const InputField = ({ label, type = "text", value, onChange, placeholder }) => (
+const InputFormField = ({ label, type = "text", value, onChange, placeholder }) => (
   <div className="flex flex-col">
     <label className="text-gray-300 mb-1">{label}</label>
     <input
@@ -14,4 +14,4 @@ const InputField = ({ label, type = "text", value, onChange, placeholder }) => (
   </div>
 );
 
-export default InputField;
+export default InputFormField;

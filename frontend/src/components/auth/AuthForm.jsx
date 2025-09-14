@@ -9,10 +9,14 @@ const AuthForm = ({
   extraLinkText,
   onExtraLinkClick,
 }) => {
+
+  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
       <div className="max-w-md w-full bg-gray-800 rounded-xl shadow-lg p-8">
         <h2 className="text-2xl font-bold text-white mb-6 text-center">{title}</h2>
+
         <form className="space-y-4" onSubmit={onSubmit}>
           {children}
           <button
@@ -22,6 +26,7 @@ const AuthForm = ({
             {submitText}
           </button>
         </form>
+
         {extraText && (
           <div className="mt-4 text-sm text-gray-400 text-center">
             {extraText}{" "}
@@ -33,6 +38,7 @@ const AuthForm = ({
             </button>
           </div>
         )}
+
       </div>
     </div>
   );

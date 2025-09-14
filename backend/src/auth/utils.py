@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 
+
 REFRESH_TOKEN_EXPIRY = timedelta(days=7)
 ACCESS_TOKEN_EXPIRY = timedelta(minutes=15)
 
