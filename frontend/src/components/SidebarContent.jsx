@@ -1,16 +1,23 @@
-import React, { useEffect, useState } from 'react'
+import { useContext } from 'react'
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { PenBox } from "lucide-react";
-import NewChatModal from './NewChatModel';
+import { ChatContext } from '../context/ChatContext';
+import { AuthContext } from '../context/AuthContext';
 
 
 
 const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
-    const [chats, setChats] = React.useState([
-        "What are vectors?",
-        "Explain quantum computing",
-        "What is the capital of France?"
-    ]);
+    const { chats, loadAllQAs, qas, setQAs } = useContext(ChatContext)
+    const { header } = useContext(AuthContext)
+
+    const handleLoadAllQAs = async (chatID) => {
+        console.log("Loding QAs req gone")
+        const response = await loadAllQAs(chatID, header)
+        if (response.success) {
+            setQAs(response.data)
+        }
+        return response.data
+    }
 
     return (
         <div className="flex flex-col flex-1 overflow-y-auto">
@@ -34,9 +41,12 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
                     <div className="text-xs sm:text-sm font-medium mb-2">Recent Chats</div>
                     <div className="space-y-1">
 
-                        {chats?.map((chat, idx) => (
-                            <Chat key={idx} chat={chat} />
-                        ))}
+                        {chats?.map((chat) => {
+                            return <Chat key={chat.uuid} chat={chat.title} onClick={async (e)=>{
+                                e.preventDefault()
+                                await handleLoadAllQAs(chat.uuid)
+                            }} />
+                        })}
 
                     </div>
                 </div>
@@ -48,9 +58,10 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
 }
 
 
-const Chat = ({ chat }) => (
+const Chat = ({ chat, onClick }) => (
     <div
         className="flex justify-between items-center p-2 sm:p-3 w-full text-white text-sm sm:text-base rounded-lg hover:bg-gray-800 cursor-pointer transition-colors duration-200 group"
+        onClick={onClick}
     >
         <span className="truncate flex-1 mr-2">{chat}</span>
         <BsThreeDotsVertical

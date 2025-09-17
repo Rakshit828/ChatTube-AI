@@ -9,7 +9,6 @@ from contextlib import asynccontextmanager
 from src.ai.main import build_chains
 from src.ai.components import ai_components
 
-
 load_dotenv()
 
 VERSION = 'v1'

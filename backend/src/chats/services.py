@@ -11,10 +11,23 @@ from src.auth.models import Users
 
 
 class ChatServices:
+    async def get_all_chats_by_uuid(self, user_uid: str, session: AsyncSession):
+        pass
+
+
     async def get_chat_by_id(self, chat_uid: str, session: AsyncSession):
         statement = select(Chats).where(Chats.uuid == chat_uid)
         result = await session.exec(statement)
         return result.first()
+
+
+    async def update_chat(self, chat_uid: str, chat_data: Dict, session: AsyncSession):
+        chat = await self.get_chat_by_id(chat_uid=chat_uid, session=session)
+        for key, value in chat_data.items():
+            setattr(chat, key, value)
+  
+        await session.commit()
+        return chat.model_dump()
 
 
     async def create_chat(self, user_uid: str, chat_data: Dict, session: AsyncSession):
@@ -26,7 +39,6 @@ class ChatServices:
         session.add(new_chat)
         await session.commit()
         return new_chat.model_dump()
-
 
 
     async def create_qa(self, qa_data: Dict, session: AsyncSession):

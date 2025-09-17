@@ -1,0 +1,17 @@
+.custom-dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #4a5568; /* Dark gray thumb */
+  border-radius: 6px;
+}
+.custom-dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #718096; /* Lighter on hover */
+}
+.custom-dark-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  background: #2d3748; /* Dark track background */
+}
+.custom-dark-scrollbar::-webkit-scrollbar-track {
+  background: #1a202c; /* Very dark track */
+}
+.custom-dark-scrollbar {
+  scrollbar-color: #4a5568 #1a202c; /* Firefox */
+}

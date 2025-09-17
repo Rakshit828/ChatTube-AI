@@ -33,4 +33,4 @@ const UrlInput = ({ url, setUrl, setEmbedUrl }) => {
   )
 }
 
-export default UrlInput
+export default UrlInput;

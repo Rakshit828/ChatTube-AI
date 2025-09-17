@@ -2,22 +2,23 @@ import { useState, useContext } from "react";
 import AuthForm from "../components/auth/AuthForm.jsx";
 import InputFormField from "../components/auth/InputFormField.jsx";
 import { AuthContext } from "../context/AuthContext.jsx";
-import Spinner from "../components/auth/Spinner.jsx";
+import Spinner from "../components/Spinner.jsx";
 
 const LoginPage = ({ switchToSignup }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const { login, setIsAuthenticated, isLoading } = useContext(AuthContext);
+  const { login, setIsAuthenticated, isLoading, setAccessToken } = useContext(AuthContext);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-
+    
     const result = await login({ email, password });
     if (result.success) {
       setIsAuthenticated(true);
+      setAccessToken(result.data?.access_token)
     } else {
       setError(result.data);
       setIsAuthenticated(false);

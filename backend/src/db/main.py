@@ -18,6 +18,12 @@ Session = sessionmaker(
     expire_on_commit=False,
 )
 
+async def init_db():
+    async with async_engine.connect() as conn:
+        from src.auth.models import Users
+        from src.chats.models import Chats, QuestionsAnswers
+        await conn.run_sync(SQLModel.metadata.create_all)
+
 
 # Dependency for FastAPI
 async def get_session():

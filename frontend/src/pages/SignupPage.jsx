@@ -2,7 +2,7 @@ import { useState, useContext } from "react";
 import AuthForm from "../components/auth/AuthForm.jsx";
 import InputFormField from "../components/auth/InputFormField.jsx";
 import { AuthContext } from "../context/AuthContext.jsx";
-import Spinner from "../components/auth/Spinner.jsx";
+import Spinner from "../components/Spinner.jsx";
 
 const SignupPage = ({ switchToLogin }) => {
   const [firstName, setFirstName] = useState("");
@@ -19,13 +19,14 @@ const SignupPage = ({ switchToLogin }) => {
     e.preventDefault();
     setError("");
 
-    const userData = { firstName, lastName, username, email, password };
+    const userData = { firstName, lastName, username, email, password, accessToken, setAccessToken };
 
     const signupResult = await signup(userData);
     if (signupResult.success) {
       const loginResult = await login({ email, password });
       if (loginResult.success) {
         setIsAuthenticated(true);
+        setAccessToken(result.data?.access_token)
       } else {
         setError(loginResult.data);
         setIsAuthenticated(false);

@@ -30,7 +30,7 @@ const ChatInput = () => {
                      px-2 sm:px-3 py-1.5 sm:py-2 
                      leading-[1.5] text-sm sm:text-base 
                      focus:outline-none 
-                     scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-700"
+                     custom-dark-scrollbar"
         />
         <button className="bg-blue-500 text-white 
                            p-2 sm:p-3 

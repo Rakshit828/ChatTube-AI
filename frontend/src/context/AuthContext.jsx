@@ -1,13 +1,20 @@
-import React, { createContext, useRef, useState } from "react";
+import React, { createContext, useMemo, useState } from "react";
 import { userLogIn, userSignUp } from "../api/auth";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [accessToken, setAccessToken] = useState("");
+
+  const header = useMemo(() => ({
+    accept: "application/json",
+    Authorization: `Bearer ${accessToken}`
+  }), [accessToken]);
+
 
   const signup = async (userData) => {
     setIsLoading(true);
@@ -23,9 +30,11 @@ export const AuthProvider = ({ children }) => {
     return result;
   };
 
+  console.log("Access TOken is ", accessToken)
+
   return (
     <AuthContext.Provider
-      value={{ signup, login, isAuthenticated, setIsAuthenticated, isLoading, accessToken}}
+      value={{ signup, login, isAuthenticated, setIsAuthenticated, isLoading, accessToken, header, setAccessToken }}
     >
       {children}
     </AuthContext.Provider>
