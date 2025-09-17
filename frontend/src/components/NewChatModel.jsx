@@ -11,6 +11,7 @@ const NewChatModal = ({ isOpen, onClose }) => {
 
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
+    
     console.log("ERROR : ", error)
     if (!isOpen) return null;
 

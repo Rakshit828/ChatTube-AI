@@ -5,7 +5,7 @@ import NewChatModal from "./NewChatModel";
 import { useState, useEffect } from "react";
 
 const Sidebar = ({ sidebar, setSidebar, isMobile }) => {
-
+  console.log("Rendering from sidebar")
   const [isChatModelOpen, setIsChatModelOpen] = useState(false)
 
   const handleCreateNewChat = (event) => {
@@ -16,9 +16,6 @@ const Sidebar = ({ sidebar, setSidebar, isMobile }) => {
     setIsChatModelOpen(false)
   }
 
-  useEffect(() => {
-
-  })
 
   return (
     <>

@@ -9,6 +9,7 @@ const ChatInput = () => {
   const [query, setQuery] = useState("");
   const textareaRef = useRef(null);
   const { qas, setQAs, selectedChatID, getResponseFromLLM } = useContext(ChatContext);
+
   const { header } = useContext(AuthContext)
 
   const handleSendQueries = async (event) => {

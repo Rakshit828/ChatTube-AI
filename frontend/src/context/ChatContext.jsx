@@ -11,7 +11,11 @@ const ChatProvider = ({ children }) => {
     const [qas, setQAs] = useState([])
     const [selectedChatID, setSelectedChatID] = useState("")
     const [videoID, setVideoID] = useState(null)
-    
+
+    const [ errorText, setErrorText ] = useState(null)
+    const [isLoading, setIsLoading] = useState(false)
+    const [loadingMsg, setLoadingMsg] = useState("")
+
     const handleSetURLs = (videoURL) => {
         setUrl(videoURL)
         console.log(videoURL)
@@ -19,13 +23,20 @@ const ChatProvider = ({ children }) => {
         let video = params.get('v')
         if (video) {
             setVideoID(video)
-            setEmbedUrl(`https://www.youtube.com/embed/${videoID}?controls=0&rel=0&modestbranding=1`)
+            setEmbedUrl(`https://www.youtube.com/embed/${video}?controls=0&rel=0&modestbranding=1`)
         }
     }
 
     return (
         <ChatContext.Provider value={
             {
+                errorText,
+                setErrorText,
+                isLoading,
+                setIsLoading,
+                loadingMsg,
+                setLoadingMsg,
+
                 videoID,
                 setVideoID,
                 url,
@@ -34,13 +45,14 @@ const ChatProvider = ({ children }) => {
                 setEmbedUrl,
                 chats,
                 setChats,
-                getResponseFromLLM,
-                getVideoTranscript,
+                qas,
+                setQAs,
                 selectedChatID,
                 setSelectedChatID,
                 handleSetURLs,
-                qas,
-                setQAs,
+
+                getResponseFromLLM,
+                getVideoTranscript,
                 createNewChat,
                 updateChat,
                 loadAllQAs,

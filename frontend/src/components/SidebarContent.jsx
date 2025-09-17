@@ -6,6 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 
 
 const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
+    console.log("Rendering from SidebarContent")
     const {
         chats,
         setChats,

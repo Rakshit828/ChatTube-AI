@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     embedding_model = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
     print("Loaded ML model")
     
-    llm = ChatGroq(model='meta-llama/llama-4-scout-17b-16e-instruct', temperature=0.7)
+    llm = ChatGroq(model='openai/gpt-oss-20b', temperature=1.2, max_tokens=1000)
     # llama-3.1-8b-instant
     # meta-llama/llama-4-scout-17b-16e-instruct
     # openai/gpt-oss-20b

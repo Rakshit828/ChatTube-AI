@@ -5,10 +5,13 @@ import { ChatContext } from "../context/ChatContext.jsx";
 import { User, Bot, Play } from "lucide-react";
 
 const ChatArea = () => {
+  console.log("Rendering from chat area")
+  
   const { embedUrl, qas } = useContext(ChatContext);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [ isFirstRender, setIsFirstRender ] = useState(true)
+  
 
   const scrollToBottom = (smooth = true) => {
     const container = chatContainerRef.current;

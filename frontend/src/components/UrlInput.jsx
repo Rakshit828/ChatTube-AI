@@ -2,41 +2,81 @@ import { AiFillYoutube } from 'react-icons/ai'
 import { useContext, useState } from 'react'
 import { AuthContext } from '../context/AuthContext'
 import { ChatContext } from '../context/ChatContext'
+import ThreeDotLoader from './ThreeDotLoader'
 
-const UrlInput = ({ }) => {
+
+const UrlInput = () => {
   const { header } = useContext(AuthContext)
-  const { videoID, getVideoTranscript, url, setUrl, updateChat, createNewChat, selectedChatID, setSelectedChatID, handleSetURLs } = useContext(ChatContext)
-  const [error, setError] = useState(null)
+
+  const {
+    videoID,
+    getVideoTranscript,
+    url,
+    setUrl,
+    chats,
+    setChats,
+    updateChat,
+    createNewChat,
+    selectedChatID,
+    setSelectedChatID,
+    handleSetURLs,
+  } = useContext(ChatContext)
+
+  const [errorText, setErrorText] = useState("");
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadingMsg, setLoadingMsg] = useState("")
 
   const handleSubmit = async () => {
+    setErrorText("")
     const chatData = {
       youtubeVideo: url
     }
     if (!selectedChatID) {
       chatData.title = "New Chat"
       console.log(chatData)
+      setIsLoading(true)
+      setLoadingMsg("Creating New Chat")
       const response = await createNewChat(chatData, header)
       if (response.success) {
+        setChats([...chats, response.data])
         setSelectedChatID(response.data?.uuid)
+        setLoadingMsg("Generating video transcript")
+        handleSetURLs(url)
         const transcript = await getVideoTranscript(videoID, header)
         if (transcript.success) {
-          console.log("Transcript loaded")
+          setIsLoading(false)
+          setLoadingMsg("")
+        } else {
+          setIsLoading(false)
+          setErrorText(transcript.data)
         }
+      } else {
+        setIsLoading(false)
+        setErrorText(response.data)
       }
     }
     else {
+      setIsLoading(true)
+      setLoadingMsg("Updating Video")
       const response = await updateChat(selectedChatID, chatData, header)
       if (response.success) {
         handleSetURLs(response.data?.youtube_video)
+        setLoadingMsg("Generating Video Transcript")
         const transcript = await getVideoTranscript(videoID, header)
         if (transcript.success) {
-          console.log("Transcript loaded")
+          setIsLoading(false)
+          setLoadingMsg("")
         }
-      } else {
-        setError(response.data + " Retry.")
+        else {
+          setIsLoading(false)
+          setErrorText(transcript.data)
+        }
+      }
+      else {
+        setIsLoading(false)
+        setErrorText(response.data + " Retry.")
       }
     }
-
   }
 
   return (
@@ -60,9 +100,18 @@ const UrlInput = ({ }) => {
         </button>
       </div>
 
-      {error && (
-        <p className='text-red-800'>{error}</p>
+      {errorText && (
+        <p className='text-red-800'>{errorText}</p>
       )}
+
+      {
+        isLoading && (
+          <div className='text-gray-500 mt-2 flex gap-4'>
+            {loadingMsg}
+            <ThreeDotLoader size={7} color='white' />
+          </div>
+        )
+      }
 
     </div>
   )
