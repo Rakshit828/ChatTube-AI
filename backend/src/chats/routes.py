@@ -28,18 +28,18 @@ async def create_new_chat(
 
 
 
-# @chats_router.post(
-#     "/allchats", 
-#     response_model=List[ResponseChatSchema]
-# )
-# async def get_all_chats(
-#     session: AsyncSession = Depends(get_session),
-#     decoded_token_data: Dict = Depends(AccessTokenBearer())
-# ):
-#     user_uid = decoded_token_data['sub']
-#     chat_data_dict = chat_data.model_dump()
-#     new_chat = await chat_service.create_chat(user_uid=user_uid, chat_data=chat_data_dict, session=session)
-#     return new_chat
+@chats_router.get(
+    "/allchats", 
+    response_model=List[ResponseChatSchema]
+)
+async def get_all_chats(
+    session: AsyncSession = Depends(get_session),
+    decoded_token_data: Dict = Depends(AccessTokenBearer())
+):
+    user_uid = decoded_token_data['sub']
+    all_chats = await chat_service.get_all_chats_by_uuid(user_uid=user_uid, session=session)
+    print(all_chats)
+    return all_chats
 
 
 
@@ -96,13 +96,13 @@ async def generate_tanscript(
 ):
     try:
         ai_components.chains['general_chain'].invoke(video_id)
-        return True
+        return 
     except Exception as e:
         return JSONResponse(
             content={"error": f"{e}"}
         )
 
-  
+
 
 @chats_router.get("/response/{query}")
 async def get_response_from_llm(
@@ -111,4 +111,3 @@ async def get_response_from_llm(
 ):
     response = ai_components.chains['main_processing_chain'].invoke(query)
     return response
-

@@ -1,18 +1,24 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
-import sqlalchemy as sa
-from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import selectinload
+from fastapi import  HTTPException, status
 
 from typing import Dict
 
-from src.db.main import get_session
+
 from .models import Chats, QuestionsAnswers
 from src.auth.models import Users
-
+from src.chats.models import Chats
 
 class ChatServices:
     async def get_all_chats_by_uuid(self, user_uid: str, session: AsyncSession):
-        pass
+        # This is to prevent the lazy loading in async mode
+        statement = select(Users).options(selectinload(Users.chats)).where(Users.uuid == user_uid)
+        result = await session.exec(statement)
+        user = result.first()
+        if user:
+            return user.chats
+        return []
 
 
     async def get_chat_by_id(self, chat_uid: str, session: AsyncSession):
@@ -23,11 +29,13 @@ class ChatServices:
 
     async def update_chat(self, chat_uid: str, chat_data: Dict, session: AsyncSession):
         chat = await self.get_chat_by_id(chat_uid=chat_uid, session=session)
-        for key, value in chat_data.items():
-            setattr(chat, key, value)
-  
-        await session.commit()
-        return chat.model_dump()
+        if chat:
+            for key, value in chat_data.items():
+                setattr(chat, key, value)
+    
+            await session.commit()
+            return chat.model_dump()
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"Chat not found"})
 
 
     async def create_chat(self, user_uid: str, chat_data: Dict, session: AsyncSession):
@@ -49,7 +57,7 @@ class ChatServices:
             session.add(new_qa)
             await session.commit()
             return new_qa
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Chat does not exists"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"Chat does not exists"})
 
 
 
@@ -59,7 +67,7 @@ class ChatServices:
             statement = select(QuestionsAnswers).where(QuestionsAnswers.chat_uid == chat_uid)
             result = await session.exec(statement)
             return result.all()
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Chat does not exists"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"Chat does not exists"})
 
 
 chat_service = ChatServices()

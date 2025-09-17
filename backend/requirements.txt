@@ -7,8 +7,6 @@ pyjwt
 asyncpg
 bcrypt
 
-alembic
-psycopg2
 
 langchain
 langchain_community

@@ -19,7 +19,7 @@ Session = sessionmaker(
 )
 
 async def init_db():
-    async with async_engine.connect() as conn:
+    async with async_engine.begin() as conn:
         from src.auth.models import Users
         from src.chats.models import Chats, QuestionsAnswers
         await conn.run_sync(SQLModel.metadata.create_all)

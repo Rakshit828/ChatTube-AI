@@ -12,21 +12,21 @@ const SignupPage = ({ switchToLogin }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const { signup, login, setIsAuthenticated, isLoading } =
+  const { signup, login, setIsAuthenticated, isLoading, setAccessToken } =
     useContext(AuthContext);
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
 
-    const userData = { firstName, lastName, username, email, password, accessToken, setAccessToken };
+    const userData = { firstName, lastName, username, email, password };
 
     const signupResult = await signup(userData);
     if (signupResult.success) {
       const loginResult = await login({ email, password });
       if (loginResult.success) {
         setIsAuthenticated(true);
-        setAccessToken(result.data?.access_token)
+        setAccessToken(loginResult.data?.access_token)
       } else {
         setError(loginResult.data);
         setIsAuthenticated(false);

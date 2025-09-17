@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 
 from src.ai.main import build_chains
 from src.ai.components import ai_components
+from src.db.main import init_db
 
 load_dotenv()
 
@@ -15,29 +16,33 @@ VERSION = 'v1'
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # embedding_model = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
-    # llm = ChatGroq(model='meta-llama/llama-4-scout-17b-16e-instruct', temperature=0.7)
+    await init_db()
+    print("Started loading ML model")
+    embedding_model = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
+    print("Loaded ML model")
+    
+    llm = ChatGroq(model='meta-llama/llama-4-scout-17b-16e-instruct', temperature=0.7)
     # llama-3.1-8b-instant
     # meta-llama/llama-4-scout-17b-16e-instruct
     # openai/gpt-oss-20b
     # openai/gpt-oss-120b
 
-    # ai_components.llm = llm
-    # ai_components.embedding_model = embedding_model
+    ai_components.llm = llm
+    ai_components.embedding_model = embedding_model
 
-    # from langchain_community.vectorstores import FAISS
+    from langchain_community.vectorstores import FAISS
 
-    # ai_components.vector_store = FAISS.from_texts(
-    #     texts=["Initial text for initializing database"],
-    #     embedding=embedding_model
-    # )
+    ai_components.vector_store = FAISS.from_texts(
+        texts=["Initial text for initializing database"],
+        embedding=embedding_model
+    )
 
-    # ai_components.retriever = ai_components.vector_store.as_retriever(
-    #     search_type='similarity',
-    #     k=2,
-    # )
+    ai_components.retriever = ai_components.vector_store.as_retriever(
+        search_type='similarity',
+        k=2,
+    )
 
-    # ai_components.chains = build_chains(ai_components)
+    ai_components.chains = build_chains(ai_components)
 
     yield
 

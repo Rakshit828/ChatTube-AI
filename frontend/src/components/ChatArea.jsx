@@ -1,30 +1,43 @@
-import { useContext, useRef, useEffect } from "react";
+import { useContext, useRef, useEffect, useState } from "react";
 import ChatInput from "./ChatInput.jsx";
 import UrlInput from "./UrlInput.jsx";
 import { ChatContext } from "../context/ChatContext.jsx";
 import { User, Bot, Play } from "lucide-react";
 
 const ChatArea = () => {
-  const { url, setUrl, setEmbedUrl, embedUrl, qas, setQAs } = useContext(ChatContext);
+  const { embedUrl, qas } = useContext(ChatContext);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const [ isFirstRender, setIsFirstRender ] = useState(true)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (smooth = true) => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    const top = container.scrollHeight - container.clientHeight;
+    if (typeof container.scrollTo === "function") {
+      container.scrollTo({ top, behavior: smooth ? "smooth" : "auto" });
+    } else {
+      container.scrollTop = top;
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return; // skip auto scroll on initial load
+    }
+    const t = setTimeout(() => scrollToBottom(true), 50);
+    return () => clearTimeout(t);
   }, [qas]);
 
   return (
     <>
-      <div className="flex flex-col h-full bg-gray-900 overflow-hidden w-full relative">
+      <div className="flex flex-col h-screen bg-gray-900 overflow-hidden w-full relative">
         {/* Chat area fills the space above the input fields */}
         <div className="flex-1 flex flex-col min-h-0 w-full">
           <div
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto overscroll-contain scroll-smooth custom-dark-scrollbar"
+            className="flex-1 overflow-y-auto overscroll-contain scroll-smooth custom-dark-scrollbar pb-32"
           >
             <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6">
               {(!qas || qas.length === 0) && !embedUrl && (
@@ -37,26 +50,21 @@ const ChatArea = () => {
                     Your New Youtube Companion
                   </h2>
 
-                  {/* First line */}
                   <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium text-gray-200">
                     Ask | Learn | Chat
                   </h1>
 
-                  {/* Second line */}
                   <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gradient mt-2">
                     ChatTube AI
                   </h1>
                 </div>
               )}
 
-
               {embedUrl && (
                 <div className="mb-8">
                   <div className="flex items-center gap-2 mb-3">
                     <Play className="w-5 h-5 text-red-500" />
-                    <span className="text-sm font-medium text-gray-300">
-                      Video Content
-                    </span>
+                    <span className="text-sm font-medium text-gray-300">Video Content</span>
                   </div>
                   <div className="relative w-full rounded-2xl overflow-hidden shadow-lg bg-gray-800 border border-gray-700">
                     <div className="aspect-video">
@@ -99,15 +107,17 @@ const ChatArea = () => {
                 </div>
               )}
 
-              <div ref={messagesEndRef} className="h-4" />
+              <div ref={messagesEndRef} className="h-6" />
             </div>
           </div>
         </div>
-        {/* Inputs always at the bottom, independent, inside chat area */}
-        <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pb-2 sm:pb-4 z-10">
-          <UrlInput url={url} setUrl={setUrl} setEmbedUrl={setEmbedUrl} />
+
+        {/* Inputs sticky at bottom so they never jump */}
+        <div className="sticky bottom-0 w-full max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 z-20 bg-gradient-to-t from-gray-900/90 to-transparent backdrop-blur-sm">
+          <UrlInput />
           <ChatInput />
         </div>
+
         {/* Footer */}
         <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pb-2">
           <p className="text-xs text-gray-500 text-center leading-relaxed">
