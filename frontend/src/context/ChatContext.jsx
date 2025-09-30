@@ -1,20 +1,29 @@
 import { createContext, useState } from "react"
-import { createNewChat, updateChat, loadAllChats, loadAllQAs, getResponseFromLLM, getVideoTranscript } from "../api/chats";
 
+import { 
+    createNewChat, 
+    updateChat, 
+    loadAllChats, 
+    loadAllQAs, 
+    getResponseFromLLM, 
+    getVideoTranscript, 
+    deleteChat } 
+from "../api/chats";
 
 export const ChatContext = createContext()
 
-const ChatProvider = ({ children }) => {
-    const [url, setUrl] = useState("");
-    const [embedUrl, setEmbedUrl] = useState("");
-    const [chats, setChats] = useState([])
-    const [qas, setQAs] = useState([])
-    const [selectedChatID, setSelectedChatID] = useState("")
-    const [videoID, setVideoID] = useState(null)
 
-    const [ errorText, setErrorText ] = useState(null)
-    const [isLoading, setIsLoading] = useState(false)
-    const [loadingMsg, setLoadingMsg] = useState("")
+const ChatProvider = ({ children }) => {
+    const [url, setUrl] = useState("");  // A state for two-way binding, this is the url entered
+    const [embedUrl, setEmbedUrl] = useState(""); // A state for embedURL, for iframe component
+    const [videoID, setVideoID] = useState(null)  // Video ID for http requests
+    
+    const [chats, setChats] = useState([]) // A state for the current user chats
+    const [qas, setQAs] = useState([])   // A state for the QAs for the current chat
+    
+    const [selectedChatID, setSelectedChatID] = useState("") 
+    const [isTranscriptGenerated, setIsTranscriptGenerated] = useState(false)
+
 
     const handleSetURLs = (videoURL) => {
         setUrl(videoURL)
@@ -30,12 +39,8 @@ const ChatProvider = ({ children }) => {
     return (
         <ChatContext.Provider value={
             {
-                errorText,
-                setErrorText,
-                isLoading,
-                setIsLoading,
-                loadingMsg,
-                setLoadingMsg,
+                isTranscriptGenerated,
+                setIsTranscriptGenerated,
 
                 videoID,
                 setVideoID,
@@ -55,6 +60,7 @@ const ChatProvider = ({ children }) => {
                 getVideoTranscript,
                 createNewChat,
                 updateChat,
+                deleteChat,
                 loadAllQAs,
                 loadAllChats
             }

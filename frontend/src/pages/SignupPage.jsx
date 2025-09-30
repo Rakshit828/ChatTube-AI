@@ -1,8 +1,9 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import AuthForm from "../components/auth/AuthForm.jsx";
 import InputFormField from "../components/auth/InputFormField.jsx";
-import { AuthContext } from "../context/AuthContext.jsx";
-import Spinner from "../components/Spinner.jsx";
+import Spinner from "../components/ui/Spinner.jsx";
+import useApiCall from "../hooks/useApiCall.jsx";
+import { userSignUp } from "../api/auth.js";
 
 const SignupPage = ({ switchToLogin }) => {
   const [firstName, setFirstName] = useState("");
@@ -10,37 +11,19 @@ const SignupPage = ({ switchToLogin }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+   
+  const {
+    isLoading,
+    isError,
+    errorMsg,
+    handleApiCall: handleSignUp
+  } = useApiCall(userSignUp, [firstName, lastName, username, email, password])
 
-  const { signup, login, setIsAuthenticated, isLoading, setAccessToken } =
-    useContext(AuthContext);
-
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setError("");
-
-    const userData = { firstName, lastName, username, email, password };
-
-    const signupResult = await signup(userData);
-    if (signupResult.success) {
-      const loginResult = await login({ email, password });
-      if (loginResult.success) {
-        setIsAuthenticated(true);
-        setAccessToken(loginResult.data?.access_token)
-      } else {
-        setError(loginResult.data);
-        setIsAuthenticated(false);
-      }
-    } else {
-      setError(signupResult.data);
-      setIsAuthenticated(false);
-    }
-  };
-
+  // Implementation of autologin is remaining
   return (
     <AuthForm
       title="Create Your Account"
-      onSubmit={handleSignup}
+      onSubmit={handleSignUp}
       submitText="Sign Up"
       extraText="Already have an account?"
       extraLinkText="Login"
@@ -52,9 +35,9 @@ const SignupPage = ({ switchToLogin }) => {
       <InputFormField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       <InputFormField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
-      {error && <div className="text-red-800">{error}</div>}
+      {isError && <div className="text-red-800">{errorMsg}</div>}
       {isLoading && <Spinner />}
-    </AuthForm>
+    </AuthForm> 
   );
 };
 

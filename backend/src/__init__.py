@@ -1,13 +1,10 @@
-from fastapi import FastAPI, Request
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
-from src.ai.main import build_chains
-from src.ai.components import ai_components
+from src.ai.components import initialize_ai_components
 from src.db.main import init_db
 
 load_dotenv()
@@ -17,35 +14,11 @@ VERSION = 'v1'
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    print("Started loading ML model")
-    embedding_model = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
-    print("Loaded ML model")
-    
-    llm = ChatGroq(model='openai/gpt-oss-20b', temperature=1.2, max_tokens=1000)
-    # llama-3.1-8b-instant
-    # meta-llama/llama-4-scout-17b-16e-instruct
-    # openai/gpt-oss-20b
-    # openai/gpt-oss-120b
 
-    ai_components.llm = llm
-    ai_components.embedding_model = embedding_model
-
-    from langchain_community.vectorstores import FAISS
-
-    ai_components.vector_store = FAISS.from_texts(
-        texts=["Initial text for initializing database"],
-        embedding=embedding_model
-    )
-
-    ai_components.retriever = ai_components.vector_store.as_retriever(
-        search_type='similarity',
-        k=2,
-    )
-
-    ai_components.chains = build_chains(ai_components)
+    ai_components =  initialize_ai_components()
+    app.state.ai_components = ai_components
 
     yield
-
 
 
 app = FastAPI(
@@ -58,7 +31,8 @@ app = FastAPI(
 
 # Define allowed origins
 origins = [
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "http://localhost:8080"
 ]
 
 # Add CORS middleware
@@ -74,5 +48,5 @@ app.add_middleware(
 from src.chats.routes import chats_router
 from src.auth.routes import auth_routes
 
-app.include_router(chats_router, tags=['Chats'])
-app.include_router(auth_routes, tags=['Authentication'])
+app.include_router(chats_router, tags=['Chats'], prefix=f"/api/{VERSION}/chats")
+app.include_router(auth_routes, tags=['Authentication'], prefix=f"/api/{VERSION}/auth")

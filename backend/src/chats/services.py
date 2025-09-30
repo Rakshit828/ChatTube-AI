@@ -2,6 +2,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from sqlalchemy.orm import selectinload
 from fastapi import  HTTPException, status
+from langchain_chroma import Chroma
 
 from typing import Dict
 
@@ -26,6 +27,11 @@ class ChatServices:
         result = await session.exec(statement)
         return result.first()
 
+    async def delete_chat(self, chat_uid: str, session: AsyncSession):
+        chat = await self.get_chat_by_id(chat_uid, session)
+        session.delete(chat)
+        await session.commit()
+        return True
 
     async def update_chat(self, chat_uid: str, chat_data: Dict, session: AsyncSession):
         chat = await self.get_chat_by_id(chat_uid=chat_uid, session=session)
@@ -68,6 +74,6 @@ class ChatServices:
             result = await session.exec(statement)
             return result.all()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"Chat does not exists"})
-
+    
 
 chat_service = ChatServices()

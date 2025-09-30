@@ -7,7 +7,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from .models import Users
 
-
 auth_service = AuthService()
 
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar.jsx";
-import ChatArea from "../components/ChatArea.jsx";
+import Sidebar from "../components/ui/Sidebar.jsx";
+import ChatArea from "../components/ui/ChatArea.jsx";
 
 const HomePage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);

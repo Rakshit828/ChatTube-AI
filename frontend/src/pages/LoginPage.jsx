@@ -1,29 +1,21 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import AuthForm from "../components/auth/AuthForm.jsx";
 import InputFormField from "../components/auth/InputFormField.jsx";
-import { AuthContext } from "../context/AuthContext.jsx";
-import Spinner from "../components/Spinner.jsx";
+import Spinner from "../components/ui/Spinner.jsx";
+import userLogIn from "../api/auth.js";
+
 
 const LoginPage = ({ switchToSignup }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-  const { login, setIsAuthenticated, isLoading, setAccessToken } = useContext(AuthContext);
+  const {
+    isLoading, 
+    isError, 
+    errorMsg, 
+    handleApiCall: handleLogin
+  } = useApiCall(userLogIn, [{email: email, password: password}])
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    
-    const result = await login({ email, password });
-    if (result.success) {
-      setIsAuthenticated(true);
-      setAccessToken(result.data?.access_token)
-    } else {
-      setError(result.data);
-      setIsAuthenticated(false);
-    }
-  };
 
   return (
     <AuthForm
@@ -37,7 +29,7 @@ const LoginPage = ({ switchToSignup }) => {
       <InputFormField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       <InputFormField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
-      {error && <div className="text-red-800">{error}</div>}
+      {isError && <div className="text-red-800">{errorMsg}</div>}
       {isLoading && <Spinner />}
     </AuthForm>
   );

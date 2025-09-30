@@ -16,4 +16,5 @@ langchain-huggingface
 youtube-transcript-api
 huggingface
 sentence-transformers
-faiss-cpu
+chromadb
+langchain_chroma

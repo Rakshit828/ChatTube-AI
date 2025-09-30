@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.ai.components import ai_components
 from .schemas import CreateQASchema, ResponseQASchema, CreateChatSchema, UpdateChatSchema, ResponseChatSchema
 from .services import chat_service
 from src.db.main import get_session
@@ -58,6 +57,19 @@ async def create_new_chat(
     return updated_chat
 
 
+@chats_router.delete(
+    "/delete/{chat_uid}",
+)
+async def delete_chat(
+    chat_uid, 
+    session: AsyncSession = Depends(get_session),
+    decoded_token_data: Dict = Depends(AccessTokenBearer())
+):
+    result = await chat_service.delete_chat(chat_uid, session)
+    return result
+
+
+
 
 @chats_router.post(
     "/newqa", 
@@ -91,11 +103,17 @@ async def get_all_qa(
 
 @chats_router.get("/video/{video_id}")
 async def generate_tanscript(
+    request: Request,
     video_id: str,
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
+    data = {
+        "user_id": decoded_token_data['sub'],
+        "video_id": video_id
+    }
+
     try:
-        ai_components.chains['general_chain'].invoke(video_id)
+        request.app.state.ai_components.chains['general_chain'].invoke(data)
         return 
     except Exception as e:
         return JSONResponse(
@@ -104,10 +122,26 @@ async def generate_tanscript(
 
 
 
-@chats_router.get("/response/{query}")
+@chats_router.get("/response/{video_id}/{query}")
 async def get_response_from_llm(
+    request: Request,
+    video_id: str,
     query: str,
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
-    response = ai_components.chains['main_processing_chain'].invoke(query)
+    data = {
+        "query": query,
+        "search_type": "similarity",
+        "search_kwargs": {
+            "k": 4,
+            "filter": {
+                "$and" : [
+                    {"user_id": decoded_token_data['sub']},
+                    {"video_id": video_id}
+                ]
+            }
+        }
+    }
+
+    response = request.app.state.ai_components.chains['main_processing_chain'].invoke(data)
     return response
