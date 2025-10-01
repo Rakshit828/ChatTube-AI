@@ -1,12 +1,16 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from .schemas import CreateQASchema, ResponseQASchema, CreateChatSchema, UpdateChatSchema, ResponseChatSchema
+from .schemas import CreateQASchema, ResponseQASchema, CreateChatSchema, UpdateChatSchema, ResponseChatSchema, ResponseCurrentChatSchema
 from .services import chat_service
 from src.db.main import get_session
 from src.auth.dependencies import AccessTokenBearer
 from typing import Dict, List
+from .exceptions import (
+    TranscriptDoesnotExistsError,
+    TranscriptAlreadyExistsError
+)
 
 chats_router = APIRouter()
 
@@ -46,7 +50,7 @@ async def get_all_chats(
     "/updatechat/{chat_uid}", 
     response_model=ResponseChatSchema
 )
-async def create_new_chat(
+async def update_chat(
     chat_uid: str,
     chat_data: UpdateChatSchema,
     session: AsyncSession = Depends(get_session),
@@ -70,7 +74,6 @@ async def delete_chat(
 
 
 
-
 @chats_router.post(
     "/newqa", 
     response_model=ResponseQASchema
@@ -85,19 +88,29 @@ async def create_new_qa(
     return new_qa
 
 
-
 @chats_router.get(
-        "/qa/{chat_uid}",
-        response_model=List[ResponseQASchema]
+    "/currentchat/{chat_uid}",
+    response_model=ResponseCurrentChatSchema
 )
-async def get_all_qa(
+async def get_all_current_chat_data(
+    request: Request,
     chat_uid: str,
     session: AsyncSession = Depends(get_session),
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
-    result = await chat_service.get_all_qa(chat_uid, session)
-    return result
+    youtube_video_url = await chat_service.get_video_id_by_chatid(chat_uid, session)
+    user_id = decoded_token_data['sub']
+    transcript_exists = request.app.state.ai_components.check_for_transcript(user_id, youtube_video_url)
 
+    result = await chat_service.get_all_qa(chat_uid, session)
+
+    current_chat = {
+        "selected_chat_id": chat_uid,
+        "youtube_video_url": youtube_video_url,
+        "is_transcript_generated": transcript_exists,
+        "questions_answers": result
+    }
+    return current_chat
 
 
 
@@ -107,18 +120,23 @@ async def generate_tanscript(
     video_id: str,
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
+    user_id = decoded_token_data['sub']
+    transcript_exists = request.app.state.ai_components.check_for_transcript(user_id, video_id)
+    if  transcript_exists:
+        raise TranscriptAlreadyExistsError()
+    
     data = {
-        "user_id": decoded_token_data['sub'],
+        "user_id": user_id,
         "video_id": video_id
     }
 
     try:
         request.app.state.ai_components.chains['general_chain'].invoke(data)
-        return 
-    except Exception as e:
         return JSONResponse(
-            content={"error": f"{e}"}
+
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"unexpected error occurred"})
 
 
 
@@ -129,6 +147,12 @@ async def get_response_from_llm(
     query: str,
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
+    user_id = decoded_token_data['sub']
+
+    transcript_exists = request.app.state.ai_components.check_for_transcript(user_id, video_id)
+    if not transcript_exists:
+        raise TranscriptDoesnotExistsError()
+    
     data = {
         "query": query,
         "search_type": "similarity",
@@ -136,7 +160,7 @@ async def get_response_from_llm(
             "k": 4,
             "filter": {
                 "$and" : [
-                    {"user_id": decoded_token_data['sub']},
+                    {"user_id": user_id},
                     {"video_id": video_id}
                 ]
             }

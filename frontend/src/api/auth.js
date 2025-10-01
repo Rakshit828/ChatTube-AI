@@ -6,7 +6,7 @@ export async function userSignUp(userData) {
     const response = await axios.post(`${BASE_URL}${AUTH_PREFIX}/signup`, userData);
     return { success: true, data: response.data };
   } catch (error) {
-    return { success: false, data: error.response?.data?.detail || error.message };
+    return { success: false, status_code: error.response?.status, data: error.response?.data?.detail || error.message };
   }
 }
 
@@ -16,6 +16,7 @@ export async function userLogIn(userData) {
     const response = await axios.post(`${BASE_URL}${AUTH_PREFIX}/login`, userData);
     return { success: true, data: response.data };
   } catch (error) {
-    return { success: false, data: error.response?.data?.detail || error.message };
+    return { success: false, status_code: error.response?.status, data: error.response?.data?.detail || error.message };
   }
 }
+

@@ -1,90 +1,37 @@
 import { FileText, Edit, Check } from "lucide-react";
-import { useContext, useState } from 'react'
-import { AuthContext } from '../../context/AuthContext'
-import { ChatContext } from '../../context/ChatContext'
+import { useState } from 'react'
+import useApiCall from '../../hooks/useApiCall.js'
 import ThreeDotLoader from './ThreeDotLoader'
+import { useDispatch, useSelector } from "react-redux";
+import { getVideoTranscript } from "../../api/chats";
+import { setIsTranscriptGeneratedToTrue } from "../../features/chatsSlice.js";
+
 
 const UrlInput = () => {
-  const { header } = useContext(AuthContext)
+  const [videoURL, setVideoURL] = useState("")
+  
+  const currentChat = useSelector(state => state.chats.currentChat)
+  const { videoId, isTranscriptGenerated } = currentChat
 
-  const {
-    isTranscriptGenerated,
-    setIsTranscriptGenerated,
-    videoID,
-    url,
-    setUrl,
-    chats,
-    setChats,
-    selectedChatID,
-    setSelectedChatID,
-
-    handleSetURLs,
-    updateChat,
-    createNewChat,
-    getVideoTranscript
-  } = useContext(ChatContext)
-
-  const [errorText, setErrorText] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [loadingMsg, setLoadingMsg] = useState("")
   const [isEditing, setIsEditing] = useState(!isTranscriptGenerated)
+  
+  const {
+    isLoading,
+    loadingMsg,
+    isError,
+    errorMsg,
+    handleApiCall
+  } = useApiCall(getVideoTranscript, "Loading Video Content")
 
+  const dispatch = useDispatch()
 
-  const fetchTranscript = async () => {
-    setLoadingMsg("Generating video transcript")
-    const transcript = await getVideoTranscript(videoID, header)
-    if (!transcript.success) {
-      throw new Error(transcript.data)
-    }
-    setIsTranscriptGenerated(true)
-  }
-
-  const handleLoad = async () => {
-    if (!url.trim()) {
-      setErrorText("Please enter a valid YouTube URL")
-      return
-    }
-
-    setErrorText("")
-    setIsLoading(true)
-
-    try {
-      const chatData = { youtubeVideo: url }
-
-      if (!selectedChatID) {
-        chatData.title = "New Chat"
-        setLoadingMsg("Creating new chat")
-        const response = await createNewChat(chatData, header)
-        if (!response.success) throw new Error(response.data)
-
-        setChats([...chats, response.data])
-        setSelectedChatID(response.data?.uuid)
-        handleSetURLs(url)
-        await fetchTranscript()
-      } else {
-        setLoadingMsg("Updating video")
-        const response = await updateChat(selectedChatID, chatData, header)
-        if (!response.success) throw new Error(response.data + " Retry.")
-
-        handleSetURLs(response.data?.youtube_video)
-        await fetchTranscript()
-      }
-    } catch (err) {
-      setErrorText(err.message || "Unexpected error. Try again.")
-    } finally {
-      setIsLoading(false)
-      setLoadingMsg("")
-    }
-  }
-
-  const handleUrlChange = (event) => {
-    setIsTranscriptGenerated(false)
-    setUrl(event.target.value)
-  }
-
-  const handleButtonClick = (event) => {
-    event.preventDefault()
-    handleSubmit()
+  const handlefetchTranscript = async (event) => {
+   event.preventDefault()
+   const dataFromServer = await handleApiCall([videoId]) // Needs videoID and header
+   if(dataFromServer){
+    dispatch(setIsTranscriptGeneratedToTrue())
+    setIsEditing(true)
+   }
   }
 
   return (
@@ -92,19 +39,19 @@ const UrlInput = () => {
       <div className="flex items-center">
         <input
           type="text"
-          value={url}
-          onChange={handleUrlChange}
+          value={videoURL}
+          onChange={(e) => setVideoURL(e.target.value)}
           placeholder="Enter YouTube URL..."
-          disabled={!isEditing}
+          disabled={isTranscriptGenerated && (isEditing === false)}
           className="flex-1 px-2 py-2 rounded-l-lg bg-gray-800 text-white placeholder-gray-400 shadow-md focus:outline-none transition disabled:opacity-70"
         />
 
         <button
-          onClick={handleLoad}
-          disabled={!isEditing}
-          className={`${!isTranscriptGenerated ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500"} text-white px-3 py-2 shadow-md flex items-center justify-center transition`}
+          onClick={handlefetchTranscript}
+          disabled={isTranscriptGenerated && (isEditing === false)}
+          className={`${!isTranscriptGenerated && (isEditing === false) ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500"} text-white px-3 py-2 shadow-md flex items-center justify-center transition`}
         >
-          {isTranscriptGenerated ? (<Check size={20} />) : (<FileText size={20} />)}
+          {isTranscriptGenerated && (isEditing === false) ? (<Check size={20} />) : (<FileText size={20} />)}
         </button>
 
         <button
@@ -116,8 +63,9 @@ const UrlInput = () => {
 
       </div>
 
-      {errorText && (
-        <p className="text-red-800 mt-2">{errorText}</p>
+
+      {isError && (
+        <p className="text-red-800 mt-2">{errorMsg}</p>
       )}
 
       {isLoading && (

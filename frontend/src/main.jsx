@@ -1,14 +1,21 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import { AuthProvider } from './context/AuthContext.jsx'
-import ChatProvider from './context/ChatContext.jsx'
+import { Provider } from 'react-redux'
+import {store} from "./app/store.js"
+
+console.log("accessToken", localStorage.getItem("accessToken"))
+console.log("refreshToken", localStorage.getItem("refreshToken"))
+
+// localStorage.setItem("accessToken", "")
+// localStorage.setItem("refreshToken", "")
+
+// console.log("accessToken", localStorage.getItem("accessToken"))
+// console.log("refreshToken", localStorage.getItem("refreshToken"))
+
 
 createRoot(document.getElementById('root')).render(
-  <AuthProvider>
-    <ChatProvider>
-      <App />
-    </ChatProvider>
-  </AuthProvider>
+  <Provider store={store}>
+    <App />
+  </Provider>
 )

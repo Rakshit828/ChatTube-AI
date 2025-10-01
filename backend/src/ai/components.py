@@ -5,6 +5,8 @@ from langchain_core.runnables import RunnableParallel, RunnablePassthrough, Runn
 from .youtube import load_video_transcript
 from .utils import prompt, Utilities
 
+from src.utils.utils import get_video_id
+
 
 class AiComponents:
     def __init__(self, 
@@ -34,6 +36,22 @@ class AiComponents:
             embedding_function=self.embedding_model
         )
         return vector_db
+    
+
+    def check_for_transcript(self, user_id, video_url_or_id):
+        video_id = get_video_id(video_url_or_id)
+        collection = self.vector_db._collection
+        results = collection.get(
+            where={
+                "$and": [
+                    {"user_id": user_id},
+                    {"video_id": video_id}
+                ]
+            },
+            limit=1
+        )
+        exists = len(results['ids']) > 0
+        return exists
     
 
     def retrieve_relevant_context(self, data):

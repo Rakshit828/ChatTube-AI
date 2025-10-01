@@ -1,33 +1,38 @@
 import { X } from "lucide-react";
-import { useContext, useState } from "react";
-import { ChatContext } from "../../context/ChatContext";
-import { AuthContext } from "../../context/AuthContext";
+import { useState } from "react";
 import Spinner from "./Spinner";
+import { useDispatch } from "react-redux";
+import useApiCall from "../../hooks/useApiCall.js"
+import { createNewChat } from "../../api/chats";
+import { addNewChat } from "../../features/chatsSlice.js";
 
 
 const NewChatModal = ({ isOpen, onClose }) => {
-    const { createNewChat, chats, setChats } = useContext(ChatContext);
-    const { header } = useContext(AuthContext);
 
-    const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState(null)
-    
-    console.log("ERROR : ", error)
+    const [title, setTitle] = useState("")
+    const [videoURL, setVideoURL] = useState("")
+
+    const dispatch = useDispatch()
+
     if (!isOpen) return null;
+    const { 
+        isLoading,
+        isError,
+        errorMsg,
+        handleApiCall
+    } = useApiCall(createNewChat)
 
-    const handleCreateChat = async (chatData) => {
-        try {
-            setIsLoading(true)
-            const response = await createNewChat(chatData, header);
-            setIsLoading(false)
-            const new_chat = response?.data
-            setChats([...chats, new_chat])
-            onClose();
-        } catch (error) {
-            setIsLoading(false)
-            setError(error.response?.data?.detail || error?.message)
+    const handleCreateNewChat = async (event) => {
+        event.preventDefault()
+        const chatData = {
+            title: title,
+            yoututbeVideoUrl: videoURL
         }
-    };
+        const dataFromServer = await handleApiCall([chatData])
+        if(dataFromServer){
+            dispatch(addNewChat(dataFromServer))
+        }
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 ">
@@ -50,13 +55,7 @@ const NewChatModal = ({ isOpen, onClose }) => {
                 <h2 className="text-white text-lg font-semibold mb-4">Create New Chat</h2>
 
                 <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        const title = e.target.title.value;
-                        const videoUrl = e.target.videoUrl.value;
-                        const chatData = { title: title, youtubeVideo: videoUrl };
-                        handleCreateChat(chatData);
-                    }}
+                    onSubmit={handleCreateNewChat}
                     className="flex flex-col gap-4"
                 >
                     <div className="flex flex-col">
@@ -67,6 +66,8 @@ const NewChatModal = ({ isOpen, onClose }) => {
                             id="title"
                             name="title"
                             type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
                             required
                             placeholder="Enter chat title"
                             className="bg-gray-800 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -81,13 +82,15 @@ const NewChatModal = ({ isOpen, onClose }) => {
                             id="videoUrl"
                             name="videoUrl"
                             type="url"
+                            value={videoURL}
+                            onChange={(e) => setVideoURL(e.target.value)}
                             required
                             placeholder="Enter video URL"
                             className="bg-gray-800 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                     {isLoading && <Spinner />}
-                    {error && <p className="text-red-800 text-sm">{error}</p>}
+                    {isError && <p className="text-red-800 text-sm">{errorMsg}</p>}
                     <button
                         type="submit"
                         className="bg-blue-600 hover:bg-blue-500 text-white rounded-md py-2 transition-colors"

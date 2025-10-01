@@ -4,6 +4,7 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from src.config import CONFIG
 import uuid
 from datetime import datetime, timedelta, timezone
+from .exceptions import ExpiredJWTTokenError
 
 
 
@@ -62,6 +63,6 @@ def decode_jwt_tokens(jwt_token: str):
         return decoded_jwt
 
     except ExpiredSignatureError:
-        raise ValueError("JWT token has expired.")
+        raise ExpiredJWTTokenError()
     except InvalidTokenError:
         raise ValueError("Invalid JWT token.")

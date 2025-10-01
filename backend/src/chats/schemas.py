@@ -1,14 +1,14 @@
 from pydantic import BaseModel, Field, field_validator
 import re
 from uuid import UUID
-from typing import Optional, Any
+from typing import Optional, Any, List
 from .exceptions import InvalidYoutubeURLError
 
 class CreateChatSchema(BaseModel):
     title: str
-    youtube_video: str = Field(alias="youtubeVideo")
+    youtube_video_url: str = Field(alias="youtubeVideoUrl")
 
-    @field_validator("youtube_video")
+    @field_validator("youtube_video_url")
     @classmethod
     def validate_url(cls, value: Any):
         """
@@ -23,9 +23,9 @@ class CreateChatSchema(BaseModel):
 
 class UpdateChatSchema(BaseModel):
     title: Optional[str] = None
-    youtube_video: Optional[str] = Field(default=None, alias="youtubeVideo")
+    youtube_video_url: Optional[str] = Field(default=None, alias="youtubeVideoUrl")
 
-    @field_validator("youtube_video")
+    @field_validator("youtube_video_url")
     @classmethod
     def validate_url(cls, value: Any):
         """
@@ -41,7 +41,7 @@ class UpdateChatSchema(BaseModel):
 class ResponseChatSchema(BaseModel):
     uuid: UUID
     title: str
-    youtubeVideo: str = Field(alias="youtube_video")
+    youtubeVideoUrl: str = Field(alias="youtube_video_url")
 
     class Config:
         orm_mode = True
@@ -59,3 +59,8 @@ class ResponseQASchema(BaseModel):
     chatUID: UUID = Field(alias="chat_uid")
 
 
+class ResponseCurrentChatSchema(BaseModel):
+    selected_chat_id: str
+    youtube_video_url: str
+    is_transcript_generated: bool = False
+    questions_answers: List[ResponseQASchema]

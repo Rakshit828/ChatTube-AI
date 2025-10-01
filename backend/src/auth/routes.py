@@ -58,7 +58,7 @@ async def logout_user(
 
 
 
-@auth_routes.post('/refresh')
+@auth_routes.get('/refresh')
 async def refresh_access_token(
     token_data: dict = Depends(RefreshTokenBearer())
 ):
@@ -66,6 +66,7 @@ async def refresh_access_token(
     role = token_data['role']
  
     new_access_token = await create_jwt_tokens(user_uuid=user_uuid, role=role, access=True)
+    print("NEW access token", new_access_token)
     return new_access_token
 
 

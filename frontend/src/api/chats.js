@@ -1,5 +1,5 @@
 import axios from "axios";
-import { BASE_URL, CHATS_PREFIX } from "./config";
+import { AUTH_PREFIX, BASE_URL, CHATS_PREFIX } from "./config";
 
 
 export const createNewChat = async (chatData, headers) => {
@@ -11,7 +11,11 @@ export const createNewChat = async (chatData, headers) => {
         )
         return { success: true, data: response.data }
     } catch (error) {
-        return { success: false, data: error.response?.data?.detail || error.message };
+        return {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        };
     }
 }
 
@@ -24,7 +28,11 @@ export const deleteChat = async (chat_uid, headers) => {
         )
         return { success: true, data: response.data }
     } catch (error) {
-        return { success: false, data: error.response?.data?.detail || error.message };
+        return {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        };
     }
 }
 
@@ -38,10 +46,13 @@ export const updateChat = async (chat_uid, chatData, headers) => {
         )
         return { success: true, data: response.data }
     } catch (error) {
-        return { success: false, data: error.response?.data?.detail || error.message };
+        return {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        };
     }
 }
-
 
 
 export const loadAllChats = async (headers) => {
@@ -49,21 +60,29 @@ export const loadAllChats = async (headers) => {
         const response = await axios.get(`${BASE_URL}${CHATS_PREFIX}/allchats`, { headers })
         return { success: true, data: response.data }
     } catch (error) {
-        return { success: false, data: error.response?.data?.detail || error.message }
+        return {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        };
     }
 }
 
 
-export const loadAllQAs = async (chat_uid, headers) => {
+export const getCurrentChatData = async (chat_uid, headers) => {
     try {
         const response = await axios.get(
-            `${BASE_URL}${CHATS_PREFIX}/qa/${chat_uid}`,
+            `${BASE_URL}${CHATS_PREFIX}/currentchat/${chat_uid}`,
             { headers }
         )
         return { success: true, data: response.data }
     }
     catch (error) {
-        return { success: false, data: error.response?.data?.detail || error.message };
+        return  {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        };
     }
 }
 
@@ -77,7 +96,11 @@ export const getResponseFromLLM = async (videoID, query, headers) => {
         return { success: true, data: response.data }
     }
     catch (error) {
-        return { success: false, data: error.response?.data?.detail || error.message }
+        return {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        };
     }
 }
 
@@ -91,7 +114,11 @@ export const getVideoTranscript = async (videoID, headers) => {
         return { success: true, data: response.data }
     }
     catch (error) {
-        return { success: false, data: error.response?.data?.detail || error.message }
+        return {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        };
     }
 }
 
@@ -106,6 +133,28 @@ export const createNewQA = async (chat_uid, headers) => {
         return { success: true, data: response.data }
     }
     catch (error) {
-        return { success: false, data: error.response?.data?.detail || error.message };
+        return {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        };
+    }
+}
+
+
+export const handleRefreshToken = async (headers) => {
+    console.log("Headers: ", headers)
+    try {
+        const response = await axios.get(
+            `${BASE_URL}${AUTH_PREFIX}/refresh`,
+            { headers }
+        )
+        return { success: true, data: response.data }
+    } catch (error) {
+        return {
+            success: false,
+            status_code: error.response?.status,
+            data: error.response?.data?.detail || error.message
+        }
     }
 }

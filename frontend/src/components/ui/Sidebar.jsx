@@ -2,11 +2,13 @@ import { ArrowLeftCircle, PenBox, X } from "lucide-react";
 import logo from "../../assets/image.png";
 import SidebarContent from "./SidebarContent";
 import NewChatModal from "./NewChatModel";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+
 
 const Sidebar = ({ sidebar, setSidebar, isMobile }) => {
   console.log("Rendering from sidebar")
   const [isChatModelOpen, setIsChatModelOpen] = useState(false)
+  
 
   const handleCreateNewChat = (event) => {
     setIsChatModelOpen(true)

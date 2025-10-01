@@ -17,7 +17,7 @@ class Chats(SQLModel, table=True):
         )
     )
     title: str
-    youtube_video: str
+    youtube_video_url: str
 
     user_uid: UUID = Field(
         sa_column=Column(

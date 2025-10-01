@@ -74,6 +74,15 @@ class ChatServices:
             result = await session.exec(statement)
             return result.all()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"Chat does not exists"})
+
+  
+    async def get_video_id_by_chatid(self, chat_uid: str, session: AsyncSession):
+        chat = await self.get_chat_by_id(chat_uid, session)
+        if chat is not None:
+            statement = select(Chats.youtube_video_url).where(Chats.uuid == chat_uid)
+            result = await session.exec(statement)
+            return result.first()
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"Chat does not exists"})
     
 
 chat_service = ChatServices()

@@ -1,18 +1,17 @@
-import { useState, useRef, useEffect, useContext } from "react";
+import { useRef, useEffect } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
-import { ChatContext } from "../../context/ChatContext";
-import { AuthContext } from "../../context/AuthContext"
-import ThreeDotLoader from "./ThreeDotLoader";
 
+const ChatInput = ({ 
+  query, 
+  setQuery,
+  generateResponse,
+}) => {
 
-const ChatInput = () => {
-  const [query, setQuery] = useState("");
   const textareaRef = useRef(null);
-  const { qas, setQAs, selectedChatID, getResponseFromLLM, videoID } = useContext(ChatContext);
-
-  const { header } = useContext(AuthContext)
 
   const handleSendQueries = async (event) => {
+    // A function which sends the query to the server and gets the response from the LLM
+
     event?.preventDefault();
     if (!query.trim()) return;
 
@@ -20,19 +19,7 @@ const ChatInput = () => {
     // lock current height to prevent immediate layout jump when we clear query
     if (textarea) textarea.style.height = `${textarea.clientHeight}px`;
 
-    setQAs((prev) => [
-      ...prev,
-      { query: query.trim(), answer: <ThreeDotLoader />, chatUID: selectedChatID },
-    ]);
-
-    const response = await getResponseFromLLM(videoID = videoID, query, header)
-    if (response) {
-      setQAs((prev) => [
-        ...prev.slice(0, -1),
-        { query: query.trim(), answer: response.data, chatUID: selectedChatID },
-      ]);
-    }
-
+    await generateResponse()
 
     setQuery("");
     // release height next frame so the auto-resize useEffect can recalc without a jump
@@ -40,6 +27,7 @@ const ChatInput = () => {
       if (textarea) textarea.style.height = "auto";
     });
   };
+
 
   // auto-resize textarea
   useEffect(() => {
