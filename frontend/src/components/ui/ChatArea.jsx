@@ -8,6 +8,7 @@ import ThreeDotLoader from "./ThreeDotLoader.jsx";
 import useApiCall from "../../hooks/useApiCall.js";
 import { getResponseFromLLM } from "../../api/chats.js";
 
+
 const ChatArea = () => {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -127,7 +128,7 @@ const ChatArea = () => {
                       <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <User className="w-4 h-4 text-white" />
                       </div>
-                      <div className="flex-1 text-base text-gray-100 leading-relaxed break-words">
+                      <div className="flex-1 text-base text-gray-100 leading-relaxed break-words word-break-break-all">
                         {qa.query}
                       </div>
                     </div>
@@ -160,14 +161,17 @@ const ChatArea = () => {
       </div>
 
       {/* Inputs */}
-      <div className="sticky bottom-0 w-full max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 z-20 bg-gradient-to-t from-gray-900/90 to-transparent backdrop-blur-sm">
-        <UrlInput />
-        <ChatInput
-          query={query}
-          setQuery={setQuery}
-          generateResponse={handleGetResponse}
-        />
+      <div className="sticky bottom-0 w-full z-20 backdrop-blur-sm">
+        <div className="max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pt-2">
+          <UrlInput />
+          <ChatInput
+            query={query}
+            setQuery={setQuery}
+            generateResponse={handleGetResponse}
+          />
+        </div>
       </div>
+
 
       {/* Footer */}
       <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pb-2">

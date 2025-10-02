@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import {store} from "./app/store.js"
 import App from './App.jsx'
 import { Provider } from 'react-redux'
-import {store} from "./app/store.js"
 
 console.log("accessToken", localStorage.getItem("accessToken"))
 console.log("refreshToken", localStorage.getItem("refreshToken"))

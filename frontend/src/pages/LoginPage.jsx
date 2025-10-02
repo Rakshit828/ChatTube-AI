@@ -26,7 +26,7 @@ const LoginPage = () => {
     console.log("Handle Login")
     event.preventDefault()
     const dataFromServer = await handleApiCall([{email: email, password: password}])
-    console.log(dataFromServer)
+    console.log("Data sent by user on login: ", dataFromServer)
     dispatch(setTokens(dataFromServer))
     navigate("/", { replace:  true })
   }

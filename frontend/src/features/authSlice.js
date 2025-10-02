@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { snakeKeysToCamel } from "./chatsSlice";
+import { snakeKeysToCamel } from "../helpers/chatHelpers";
+
 
 export const initialState = {
     accessToken: "",
@@ -17,7 +18,7 @@ const authSlice = createSlice({
     reducers: {
         setTokens: (state, action) => {
             action.payload = snakeKeysToCamel(action.payload)
-            console.log(action.payload)
+            console.log("Calling set tokens from reducer : ", action.payload)
             state.accessToken = action.payload.accessToken;
             state.refreshToken = action.payload.refreshToken;
             localStorage.setItem("accessToken", state.accessToken)
@@ -30,8 +31,9 @@ const authSlice = createSlice({
         },
 
         setRefreshToken: (state, action) => {
-            state.refreshToken = action.payload;
-            localStorage.setItem("refreshToken", action.refreshToken)
+            action.payload = snakeKeysToCamel(action.payload)
+            state.refreshToken = action.payload.refreshToken
+            localStorage.setItem("refreshToken", state.auth.refreshToken)
         },
 
         clearTokens: (state) => {

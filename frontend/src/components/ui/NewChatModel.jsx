@@ -8,30 +8,33 @@ import { addNewChat } from "../../features/chatsSlice.js";
 
 
 const NewChatModal = ({ isOpen, onClose }) => {
-
     const [title, setTitle] = useState("")
     const [videoURL, setVideoURL] = useState("")
-
     const dispatch = useDispatch()
 
-    if (!isOpen) return null;
     const { 
         isLoading,
         isError,
         errorMsg,
         handleApiCall
     } = useApiCall(createNewChat)
+    
+    if (!isOpen) return null;
 
     const handleCreateNewChat = async (event) => {
         event.preventDefault()
         const chatData = {
             title: title,
-            yoututbeVideoUrl: videoURL
+            youtubeVideoUrl: videoURL
         }
+        console.log("New chat model chat data: ", chatData)
         const dataFromServer = await handleApiCall([chatData])
         if(dataFromServer){
             dispatch(addNewChat(dataFromServer))
         }
+        setTitle("")
+        setVideoURL("")
+        onClose()
     }
 
     return (

@@ -37,6 +37,11 @@ class AiComponents:
         )
         return vector_db
     
+    def get_response_llm(self, prompt):
+        print(prompt)
+        response = self.llm.invoke(prompt)
+        return response
+    
 
     def check_for_transcript(self, user_id, video_url_or_id):
         video_id = get_video_id(video_url_or_id)
@@ -74,7 +79,7 @@ class AiComponents:
             "user_query": RunnablePassthrough()
         })
         
-        main_processing_chain = parallel_chain | prompt | self.llm | self.utilities.parser
+        main_processing_chain = parallel_chain | prompt | RunnableLambda(self.get_response_llm) | self.utilities.parser
         return {"general_chain": general_chain, "main_processing_chain": main_processing_chain}
 
 

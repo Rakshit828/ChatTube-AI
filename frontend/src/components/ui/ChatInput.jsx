@@ -1,8 +1,8 @@
 import { useRef, useEffect } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 
-const ChatInput = ({ 
-  query, 
+const ChatInput = ({
+  query,
   setQuery,
   generateResponse,
 }) => {
@@ -48,8 +48,10 @@ const ChatInput = ({
     }
   };
 
+
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 lg:py-4">
+    <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8">
+
       <form
         onSubmit={handleSendQueries}
         className="bg-gray-700 rounded-3xl flex items-center p-1 gap-2 sm:gap-3"

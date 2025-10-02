@@ -1,22 +1,11 @@
-import axios from "axios";
-import { BASE_URL, AUTH_PREFIX } from "./config";
+import axios from "axios"
+import { BASE_URL, AUTH_PREFIX, handleRequest } from "./base"
 
-export async function userSignUp(userData) {
-  try {
-    const response = await axios.post(`${BASE_URL}${AUTH_PREFIX}/signup`, userData);
-    return { success: true, data: response.data };
-  } catch (error) {
-    return { success: false, status_code: error.response?.status, data: error.response?.data?.detail || error.message };
-  }
-}
+export const userSignUp = (userData) =>
+  handleRequest(() => axios.post(`${BASE_URL}${AUTH_PREFIX}/signup`, userData))
 
+export const userLogIn = (userData) =>
+  handleRequest(() => axios.post(`${BASE_URL}${AUTH_PREFIX}/login`, userData))
 
-export async function userLogIn(userData) {
-  try {
-    const response = await axios.post(`${BASE_URL}${AUTH_PREFIX}/login`, userData);
-    return { success: true, data: response.data };
-  } catch (error) {
-    return { success: false, status_code: error.response?.status, data: error.response?.data?.detail || error.message };
-  }
-}
-
+export const handleRefreshToken = (headers) =>
+    handleRequest(() => axios.get(`${BASE_URL}${AUTH_PREFIX}/refresh`, { headers }))

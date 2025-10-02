@@ -6,7 +6,6 @@ import { loadAllChats, getCurrentChatData } from '../../api/chats';
 import { initializeCurrentChat, initializeUserChats } from '../../features/chatsSlice';
 import ThreeDotLoader from './ThreeDotLoader';
 
-
 const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
     const userChats = useSelector(state => state.chats.userChats);
     const currentChat = useSelector(state => state.chats.currentChat);
@@ -18,23 +17,23 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
         isLoading, 
         isError, 
         errorMsg,
-         handleApiCall 
+        loadingMsg,
+        handleApiCall 
     } = useApiCall(loadAllChats, "Loading Chats", true);
 
     useEffect(() => {
         const handleLoadAllChats = async () => {
-            try {
-                const dataFromServer = await handleApiCall([]);
-                if (dataFromServer) dispatch(initializeUserChats(dataFromServer));
-            } catch (err) {
-                console.error(err);
+            const dataFromServer = await handleApiCall([]);
+            if (dataFromServer && !isError) {
+                dispatch(initializeUserChats(dataFromServer));
             }
         };
+        
         handleLoadAllChats();
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <div className="flex flex-col flex-1 overflow-y-auto">
+        <div className="flex flex-col flex-1 overflow-y-auto custom-dark-scrollbar">
             {/* New Chat button */}
             <div
                 id="new-chat"
@@ -54,7 +53,20 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
                 <div id="chats" className="w-full mt-4 sm:mt-6 text-gray-400 px-3">
                     <div className="text-xs sm:text-sm font-medium mb-2">Recent Chats</div>
                     <div className="space-y-1">
-                        {userChats ? (
+                        {isLoading && (
+                            <div className="flex flex-col items-center justify-center py-4">
+                                <ThreeDotLoader />
+                                {loadingMsg && <p className="text-xs mt-2">{loadingMsg}</p>}
+                            </div>
+                        )}
+                        
+                        {isError && (
+                            <div className="text-red-400 text-sm p-3 bg-red-900/20 rounded-lg">
+                                {errorMsg}
+                            </div>
+                        )}
+                        
+                        {!isLoading && !isError && userChats && userChats.length > 0 && (
                             userChats.map(chat => (
                                 <Chat
                                     key={chat.uuid}
@@ -64,11 +76,12 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
                                     dispatch={dispatch}
                                 />
                             ))
-                        ) : (
-                            <>
-                                {isLoading && <ThreeDotLoader />}
-                                {isError && <div>{errorMsg}</div>}
-                            </>
+                        )}
+                        
+                        {!isLoading && !isError && (!userChats || userChats.length === 0) && (
+                            <div className="text-gray-500 text-sm text-center py-4">
+                                No chats yet. Start a new conversation!
+                            </div>
                         )}
                     </div>
                 </div>
@@ -78,12 +91,16 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
 };
 
 const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
-    const { handleApiCall } = useApiCall(getCurrentChatData);
+    const { handleApiCall, isLoading } = useApiCall(getCurrentChatData);
 
     const handleSelectCurrentChat = async () => {
+        if (isLoading) return; // Prevent multiple clicks
+        
         const dataFromServer = await handleApiCall([chatID]);
-        console.log("Data from the server ", dataFromServer)
-        dispatch(initializeCurrentChat(dataFromServer));
+        if (dataFromServer) {
+            console.log("Data from the server ", dataFromServer);
+            dispatch(initializeCurrentChat(dataFromServer));
+        }
     };
 
     return (
@@ -91,10 +108,12 @@ const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
             className={`
         flex justify-between items-center p-2 sm:p-3 w-full text-sm sm:text-base rounded-lg cursor-pointer transition-colors duration-200
         ${isSelected ? 'bg-gray-700' : 'text-white hover:bg-gray-800'}
+        ${isLoading ? 'opacity-50 cursor-wait' : ''}
       `}
             onClick={handleSelectCurrentChat}
         >
             <span className="truncate flex-1">{chatTitle}</span>
+            {isLoading && <span className="ml-2 text-xs">...</span>}
         </div>
     );
 };

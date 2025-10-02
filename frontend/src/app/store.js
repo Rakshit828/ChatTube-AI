@@ -2,6 +2,8 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer, { initialState as authInitialState } from "../features/authSlice.js";
 import chatReducer from "../features/chatsSlice.js";
 
+
+
 // Loading the accessToken from the local storage if exists
 const preloadedAuth = {
   ...authInitialState,

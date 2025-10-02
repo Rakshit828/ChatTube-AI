@@ -1,160 +1,27 @@
-import axios from "axios";
-import { AUTH_PREFIX, BASE_URL, CHATS_PREFIX } from "./config";
+import axios from "axios"
+import {  BASE_URL, CHATS_PREFIX, handleRequest } from "./base"
 
 
-export const createNewChat = async (chatData, headers) => {
-    try {
-        const response = await axios.post(
-            `${BASE_URL}${CHATS_PREFIX}/newchat`,
-            chatData,
-            { headers }
-        )
-        return { success: true, data: response.data }
-    } catch (error) {
-        return {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        };
-    }
-}
+export const createNewChat = (chatData, headers) =>
+    handleRequest(() => axios.post(`${BASE_URL}${CHATS_PREFIX}/newchat`, chatData, { headers }))
 
+export const deleteChat = (chat_uid, headers) =>
+    handleRequest(() => axios.delete(`${BASE_URL}${CHATS_PREFIX}/delete/${chat_uid}`, { headers }))
 
-export const deleteChat = async (chat_uid, headers) => {
-    try {
-        const response = await axios.delete(
-            `${BASE_URL}${CHATS_PREFIX}/delete/${chat_uid}`,
-            { headers }
-        )
-        return { success: true, data: response.data }
-    } catch (error) {
-        return {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        };
-    }
-}
+export const updateChat = (chat_uid, chatData, headers) =>
+    handleRequest(() => axios.post(`${BASE_URL}${CHATS_PREFIX}/updatechat/${chat_uid}`, chatData, { headers }))
 
+export const loadAllChats = (headers) =>
+    handleRequest(() => axios.get(`${BASE_URL}${CHATS_PREFIX}/allchats`, { headers }))
 
-export const updateChat = async (chat_uid, chatData, headers) => {
-    try {
-        const response = await axios.post(
-            `${BASE_URL}${CHATS_PREFIX}/updatechat/${chat_uid}`,
-            chatData,
-            { headers }
-        )
-        return { success: true, data: response.data }
-    } catch (error) {
-        return {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        };
-    }
-}
+export const getCurrentChatData = (chat_uid, headers) =>
+    handleRequest(() => axios.get(`${BASE_URL}${CHATS_PREFIX}/currentchat/${chat_uid}`, { headers }))
 
+export const getResponseFromLLM = (videoID, query, headers) =>
+    handleRequest(() => axios.get(`${BASE_URL}${CHATS_PREFIX}/response/${videoID}/${query}`, { headers }))
 
-export const loadAllChats = async (headers) => {
-    try {
-        const response = await axios.get(`${BASE_URL}${CHATS_PREFIX}/allchats`, { headers })
-        return { success: true, data: response.data }
-    } catch (error) {
-        return {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        };
-    }
-}
+export const getVideoTranscript = (videoID, headers) =>
+    handleRequest(() => axios.get(`${BASE_URL}${CHATS_PREFIX}/video/${videoID}`, { headers }))
 
-
-export const getCurrentChatData = async (chat_uid, headers) => {
-    try {
-        const response = await axios.get(
-            `${BASE_URL}${CHATS_PREFIX}/currentchat/${chat_uid}`,
-            { headers }
-        )
-        return { success: true, data: response.data }
-    }
-    catch (error) {
-        return  {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        };
-    }
-}
-
-
-export const getResponseFromLLM = async (videoID, query, headers) => {
-    try {
-        const response = await axios.get(
-            `${BASE_URL}${CHATS_PREFIX}/response/${videoID}/${query}`,
-            { headers }
-        )
-        return { success: true, data: response.data }
-    }
-    catch (error) {
-        return {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        };
-    }
-}
-
-
-export const getVideoTranscript = async (videoID, headers) => {
-    try {
-        const response = await axios.get(
-            `${BASE_URL}${CHATS_PREFIX}/video/${videoID}`,
-            { headers }
-        )
-        return { success: true, data: response.data }
-    }
-    catch (error) {
-        return {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        };
-    }
-}
-
-
-
-export const createNewQA = async (chat_uid, headers) => {
-    try {
-        const response = await axios.get(
-            `${BASE_URL}${CHATS_PREFIX}/qa/${chat_uid}`,
-            { headers }
-        )
-        return { success: true, data: response.data }
-    }
-    catch (error) {
-        return {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        };
-    }
-}
-
-
-export const handleRefreshToken = async (headers) => {
-    console.log("Headers: ", headers)
-    try {
-        const response = await axios.get(
-            `${BASE_URL}${AUTH_PREFIX}/refresh`,
-            { headers }
-        )
-        return { success: true, data: response.data }
-    } catch (error) {
-        return {
-            success: false,
-            status_code: error.response?.status,
-            data: error.response?.data?.detail || error.message
-        }
-    }
-}
+export const createNewQA = (chat_uid, headers) =>
+    handleRequest(() => axios.get(`${BASE_URL}${CHATS_PREFIX}/qa/${chat_uid}`, { headers }))

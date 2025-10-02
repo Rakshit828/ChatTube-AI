@@ -133,7 +133,7 @@ async def generate_tanscript(
     try:
         request.app.state.ai_components.chains['general_chain'].invoke(data)
         return JSONResponse(
-
+            content="Sucessful"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail={"unexpected error occurred"})
