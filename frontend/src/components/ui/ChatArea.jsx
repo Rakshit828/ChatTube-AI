@@ -6,28 +6,37 @@ import { useDispatch, useSelector } from "react-redux";
 import { addNewQuestionsAnwers } from "../../features/chatsSlice.js";
 import ThreeDotLoader from "./ThreeDotLoader.jsx";
 import useApiCall from "../../hooks/useApiCall.js";
-import { getResponseFromLLM } from "../../api/chats.js";
+import { createNewQA, getResponseFromLLM } from "../../api/chats.js";
 
 
 const ChatArea = () => {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [isFirstRender, setIsFirstRender] = useState(true);
-  const [query, setQuery] = useState("");
-
+  
   const currentChat = useSelector(state => state.chats.currentChat);
   const { selectedChatId, videoId, embedUrl, questionsAnswers } = currentChat;
-
+  
+  const [query, setQuery] = useState("");
+  const [answer, setAnswer] = useState("");
+  
   const dispatch = useDispatch();
-
+ 
   const {
-    isLoading,
-    loadingMsg,
-    isError,
-    errorMsg,
-    handleApiCall
+    isLoading: isLoadingResponse,
+    loadingMsg: loadingMsgResponse,
+    isError: isErrorResponse,
+    errorMsg: errorMsgResponse,
+    handleApiCall: handleApiCallResponse
   } = useApiCall(getResponseFromLLM, "Thinking");
-
+  
+  const {
+    isLoading: isLoadingSave,
+    loadingMsg: loadingMsgSave,
+    isError: isErrorSave,
+    errorMsg: erroMsgSave,
+    handleApiCall: handleApiCallSave
+  } = useApiCall(createNewQA)
 
   const handleGetResponse = async () => {
     // Store user's question first
@@ -37,17 +46,29 @@ const ChatArea = () => {
       chatUID: selectedChatId
     }));
 
-    // Call API
-    const response = await handleApiCall([videoId, query]);
+    const response = await handleApiCallResponse([videoId, query]);
 
     // Update the last question-answer entry with the response
-    const updatedAnswer = response || "Error: " + errorMsg;
+    const updatedAnswer = response.data || "Error: " + errorMsgResponse;
     dispatch(addNewQuestionsAnwers({
       query: query.trim(),
       answer: updatedAnswer,
       chatUID: selectedChatId
     }));
   };
+  
+
+  const handleSaveQA = async () => {
+    const qaData = {
+      query: query,
+      answer: answer,
+      chat_uid: selectedChatId
+    }
+    const response = await handleApiCallSave([qaData])
+    if(response.success){
+      console.log("QA created successfully")
+    }
+  }
 
   const scrollToBottom = (smooth = true) => {
     const container = chatContainerRef.current;
@@ -65,9 +86,10 @@ const ChatArea = () => {
       setIsFirstRender(false);
       return;
     }
-    const t = setTimeout(() => scrollToBottom(true), 50);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => scrollToBottom(true), 50);
+    return () => clearTimeout(timer);
   }, [questionsAnswers]);
+
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 overflow-hidden w-full relative">
@@ -139,12 +161,12 @@ const ChatArea = () => {
                         <Bot className="w-4 h-4 text-gray-300" />
                       </div>
                       <div className="flex-1 text-base text-gray-200 leading-relaxed break-words whitespace-pre-wrap">
-                        {isLoading && index === questionsAnswers.length - 1 ? (
+                        {isLoadingResponse && index === questionsAnswers.length - 1 ? (
                           <div className="flex items-center gap-2">
-                            {loadingMsg} <ThreeDotLoader size={10} />
+                            {loadingMsgResponse} <ThreeDotLoader size={10} />
                           </div>
-                        ) : isError && index === questionsAnswers.length - 1 ? (
-                          <div className="text-red-600">{errorMsg}</div>
+                        ) : isErrorResponse && index === questionsAnswers.length - 1 ? (
+                          <div className="text-red-600">{errorMsgResponse}</div>
                         ) : (
                           qa.answer
                         )}

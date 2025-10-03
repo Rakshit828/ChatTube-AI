@@ -13,56 +13,74 @@ export const initialState = {
   }
 }
 
-
 export const chatsSlice = createSlice({
   name: "chats",
   initialState,
   reducers: {
     initializeUserChats: (state, action) => {
-      action.payload = snakeKeysToCamel(action.payload)
-      state.userChats = action.payload
+      const payload = snakeKeysToCamel(action.payload)
+      state.userChats = payload
+    },
+    
+    deleteUserChat: (state, action) => {
+      const payload = snakeKeysToCamel(action.payload)
+      state.userChats = state.userChats.filter((chat) => chat.uuid !== payload.uuid )
     },
 
-    initializeCurrentChat: (state, action) => {
-      action.payload = snakeKeysToCamel(action.payload)
-      console.log("Payload : ", action.payload)
-      action.payload['embedUrl'] = getYouTubeEmbedUrl(action.payload.youtubeVideoUrl)
-      action.payload['videoId'] = getYouTubeVideoId(action.payload.youtubeVideoUrl)
-      state.currentChat = action.payload
+    updateUserChats: (state, action) => {
+      const payload = snakeKeysToCamel(action.payload)
+      const chatUUID = payload?.uuid
+      const chat = state.userChats.find(chat => chat.uuid === chatUUID)
+
+      if (chat) {
+        chat.title = payload?.title
+        chat.youtube_video_url = payload?.youtubeVideoUrl
+      }
+    },
+
+    addNewChat: (state, action) => {
+      const payload = snakeKeysToCamel(action.payload)
+      state.userChats.push(payload)
+    },
+
+    initializeCurrentChat: (state, action = {}) => {
+      //To check for empty object
+      if(typeof action.payload === 'object' && Object.keys(action.payload).length === 0){
+        state.currentChat = initialState.currentChat
+        return;
+      }
+      const payload = snakeKeysToCamel(action.payload)
+      console.log("Payload : ", payload)
+      payload['embedUrl'] = getYouTubeEmbedUrl(payload.youtubeVideoUrl)
+      payload['videoId'] = getYouTubeVideoId(payload.youtubeVideoUrl)
+      state.currentChat = payload
       console.log("Current Chat: ", state.currentChat)
     },
 
-    makeQuestionsAnswers: (state, action) => {
-      state.currentChat.questionsAnswers = action.payload
-    },
-
-    addNewQuestionsAnwers: (state, action) => {
+    updateQAs: (state, action) => {
       state.currentChat.questionsAnswers = state.currentChat.questionsAnswers.slice(0, -1)
       state.currentChat.questionsAnswers.push(action.payload)
     },
 
-    addNewChat: (state, action) => {
-      state.userChats.push(action.payload)
-    },
+    // addNewQuestionsAnswers: (state, action) => {
+    //   const payload = snakeKeysToCamel(action.payload)
+    //   state.currentChat.q
+    // },
+    
 
-    // chatsSlice.js
     setIsTranscriptGeneratedToTrue: (state, action) => {
-      // If payload is provided, use it; otherwise default to true
       state.currentChat.isTranscriptGenerated = action.payload ?? true;
     },
 
-
     updateCurrentChat: (state, action) => {
-      action.payload = snakeKeysToCamel(action.payload)
-      state.currentChat.selectedChatId = action.payload.uuid
-      state.currentChat.youtubeVideoUrl = action.payload.youtubeVideoUrl
+      const payload = snakeKeysToCamel(action.payload)
+      state.currentChat.selectedChatId = payload.uuid
+      state.currentChat.youtubeVideoUrl = payload.youtubeVideoUrl
       state.currentChat.embedUrl = getYouTubeEmbedUrl(state.currentChat.youtubeVideoUrl)
       state.currentChat.videoId = getYouTubeVideoId(state.currentChat.youtubeVideoUrl)
     }
-
   }
 })
-
 
 export const {
   initializeCurrentChat,
@@ -71,7 +89,9 @@ export const {
   addNewChat,
   addNewQuestionsAnwers,
   setIsTranscriptGeneratedToTrue,
-  updateCurrentChat
+  updateCurrentChat,
+  deleteUserChat,
+  updateUserChats
 } = chatsSlice.actions
 
 export default chatsSlice.reducer

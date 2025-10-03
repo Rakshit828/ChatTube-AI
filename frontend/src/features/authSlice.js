@@ -3,11 +3,27 @@ import { snakeKeysToCamel } from "../helpers/chatHelpers";
 
 
 export const initialState = {
-    accessToken: "",
-    refreshToken: "",
+    accessToken: undefined,
+    refreshToken: undefined,
 };
 
-export const selectIsAuthenticated = (state) => !!state.auth.accessToken;
+
+export const selectIsAuthenticated = (state) => {
+    const token = state.auth.accessToken;
+
+    // Return true only if token is a non-empty string that looks like a JWT
+    if (typeof token !== 'string') return false;          // cHECKS for string
+    if (token.trim() === '') return false;                // Empty string → invalid
+    if (token === 'undefined') return false;             // Literal "undefined" → invalid
+
+    // Optional: check for basic JWT format (three parts separated by dots)
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;                // Not a valid JWT
+
+    return true;                                        // Looks valid
+};
+
+
 export const selectAccessToken = state => state.auth.accessToken
 export const selectRefreshToken = state => state.auth.refreshToken
 

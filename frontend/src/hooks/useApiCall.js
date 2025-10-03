@@ -47,8 +47,6 @@ function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
     return response
   };
   
-
-  // Returns real response when error and when success it returns the datafrom the server
   const handleApiCall = useCallback(async (apiParameters = []) => {
     setErrorMsg("");
     setIsError(false);
@@ -57,6 +55,7 @@ function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
 
     try {
       // First attempt with current access token
+      console.log("First api call parameters ", apiParameters)
       let response = await makeApiCallWithToken(accessToken, apiParameters);
       
       console.log("Response of first api call (any) ", response)
@@ -87,7 +86,7 @@ function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
       // Success case
       setIsLoading(false);
       setLoadingMsg("");
-      return response.data;
+      return response
 
     } catch (error) {
       console.error("API Call Error:", error);

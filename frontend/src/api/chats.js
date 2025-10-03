@@ -9,7 +9,7 @@ export const deleteChat = (chat_uid, headers) =>
     handleRequest(() => axios.delete(`${BASE_URL}${CHATS_PREFIX}/delete/${chat_uid}`, { headers }))
 
 export const updateChat = (chat_uid, chatData, headers) =>
-    handleRequest(() => axios.post(`${BASE_URL}${CHATS_PREFIX}/updatechat/${chat_uid}`, chatData, { headers }))
+    handleRequest(() => axios.put(`${BASE_URL}${CHATS_PREFIX}/updatechat/${chat_uid}`, chatData, { headers }))
 
 export const loadAllChats = (headers) =>
     handleRequest(() => axios.get(`${BASE_URL}${CHATS_PREFIX}/allchats`, { headers }))
@@ -23,5 +23,5 @@ export const getResponseFromLLM = (videoID, query, headers) =>
 export const getVideoTranscript = (videoID, headers) =>
     handleRequest(() => axios.get(`${BASE_URL}${CHATS_PREFIX}/video/${videoID}`, { headers }))
 
-export const createNewQA = (chat_uid, headers) =>
-    handleRequest(() => axios.get(`${BASE_URL}${CHATS_PREFIX}/qa/${chat_uid}`, { headers }))
+export const createNewQA = (qaData, headers) =>
+    handleRequest(() => axios.post(`${BASE_URL}${CHATS_PREFIX}/newqa`, qaData, { headers }))

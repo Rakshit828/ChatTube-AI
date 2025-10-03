@@ -8,8 +8,8 @@ from src.db.main import get_session
 from src.auth.dependencies import AccessTokenBearer
 from typing import Dict, List
 from .exceptions import (
-    TranscriptDoesnotExistsError,
-    TranscriptAlreadyExistsError
+    TranscriptDoesNotExistError,
+    TranscriptAlreadyExistError
 )
 
 chats_router = APIRouter()
@@ -46,7 +46,7 @@ async def get_all_chats(
 
 
 
-@chats_router.post(
+@chats_router.put(
     "/updatechat/{chat_uid}", 
     response_model=ResponseChatSchema
 )
@@ -65,12 +65,18 @@ async def update_chat(
     "/delete/{chat_uid}",
 )
 async def delete_chat(
+    request: Request,
     chat_uid, 
     session: AsyncSession = Depends(get_session),
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
+    user_id = decoded_token_data['sub']
+    youtube_video_url = chat_service.get_video_url_by_chatid(chat_uid, session)
+    is_transcript_deleted = await request.app.state.ai_components.delete_video_transcript(user_id, youtube_video_url)
     result = await chat_service.delete_chat(chat_uid, session)
-    return result
+
+    if result and is_transcript_deleted:
+        return True
 
 
 
@@ -98,9 +104,9 @@ async def get_all_current_chat_data(
     session: AsyncSession = Depends(get_session),
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
-    youtube_video_url = await chat_service.get_video_id_by_chatid(chat_uid, session)
+    youtube_video_url = await chat_service.get_video_url_by_chatid(chat_uid, session)
     user_id = decoded_token_data['sub']
-    transcript_exists = request.app.state.ai_components.check_for_transcript(user_id, youtube_video_url)
+    transcript_exists = await request.app.state.ai_components.check_for_transcript(user_id, youtube_video_url)
 
     result = await chat_service.get_all_qa(chat_uid, session)
 
@@ -121,9 +127,9 @@ async def generate_tanscript(
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
     user_id = decoded_token_data['sub']
-    transcript_exists = request.app.state.ai_components.check_for_transcript(user_id, video_id)
+    transcript_exists = await request.app.state.ai_components.check_for_transcript(user_id, video_id)
     if  transcript_exists:
-        raise TranscriptAlreadyExistsError()
+        raise TranscriptAlreadyExistError()
     
     data = {
         "user_id": user_id,
@@ -149,9 +155,9 @@ async def get_response_from_llm(
 ):
     user_id = decoded_token_data['sub']
 
-    transcript_exists = request.app.state.ai_components.check_for_transcript(user_id, video_id)
+    transcript_exists = await request.app.state.ai_components.check_for_transcript(user_id, video_id)
     if not transcript_exists:
-        raise TranscriptDoesnotExistsError()
+        raise TranscriptDoesNotExistError()
     
     data = {
         "query": query,

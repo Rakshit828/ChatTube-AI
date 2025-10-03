@@ -29,7 +29,7 @@ class ChatServices:
 
     async def delete_chat(self, chat_uid: str, session: AsyncSession):
         chat = await self.get_chat_by_id(chat_uid, session)
-        session.delete(chat)
+        await session.delete(chat)
         await session.commit()
         return True
 
@@ -76,7 +76,7 @@ class ChatServices:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"Chat does not exists"})
 
   
-    async def get_video_id_by_chatid(self, chat_uid: str, session: AsyncSession):
+    async def get_video_url_by_chatid(self, chat_uid: str, session: AsyncSession):
         chat = await self.get_chat_by_id(chat_uid, session)
         if chat is not None:
             statement = select(Chats.youtube_video_url).where(Chats.uuid == chat_uid)

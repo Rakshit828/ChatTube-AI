@@ -1,7 +1,7 @@
 import { ArrowLeftCircle, PenBox, X } from "lucide-react";
 import logo from "../../assets/image.png";
 import SidebarContent from "./SidebarContent";
-import NewChatModal from "./NewChatModel";
+import NewChatModal from "./NewChatModal";
 import { useState } from "react";
 
 

@@ -41,7 +41,7 @@ class UpdateChatSchema(BaseModel):
 class ResponseChatSchema(BaseModel):
     uuid: UUID
     title: str
-    youtubeVideoUrl: str = Field(alias="youtube_video_url")
+    youtube_video_url: str 
 
     class Config:
         orm_mode = True
@@ -50,13 +50,13 @@ class ResponseChatSchema(BaseModel):
 class CreateQASchema(BaseModel):
     query: str
     answer: str
-    chat_uid: UUID = Field(alias="chatUID")
+    chat_uid: UUID 
 
 
 class ResponseQASchema(BaseModel):
     query: str
     answer: str
-    chatUID: UUID = Field(alias="chat_uid")
+    chat_uid: UUID
 
 
 class ResponseCurrentChatSchema(BaseModel):

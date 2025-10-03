@@ -2,9 +2,12 @@ import { useEffect } from 'react';
 import { PenBox } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
 import useApiCall from '../../hooks/useApiCall';
-import { loadAllChats, getCurrentChatData } from '../../api/chats';
-import { initializeCurrentChat, initializeUserChats } from '../../features/chatsSlice';
+import { loadAllChats } from '../../api/chats';
+import { initializeUserChats } from '../../features/chatsSlice';
 import ThreeDotLoader from './ThreeDotLoader';
+import Chat from './Chat.jsx'
+
+
 
 const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
     const userChats = useSelector(state => state.chats.userChats);
@@ -13,22 +16,22 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
 
     const dispatch = useDispatch();
 
-    const { 
-        isLoading, 
-        isError, 
+    const {
+        isLoading,
+        isError,
         errorMsg,
         loadingMsg,
-        handleApiCall 
+        handleApiCall
     } = useApiCall(loadAllChats, "Loading Chats", true);
 
     useEffect(() => {
         const handleLoadAllChats = async () => {
-            const dataFromServer = await handleApiCall([]);
-            if (dataFromServer && !isError) {
-                dispatch(initializeUserChats(dataFromServer));
+            const response = await handleApiCall([]);
+            if (response.success && !isError) {
+                dispatch(initializeUserChats(response.data));
             }
         };
-        
+
         handleLoadAllChats();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -59,13 +62,13 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
                                 {loadingMsg && <p className="text-xs mt-2">{loadingMsg}</p>}
                             </div>
                         )}
-                        
+
                         {isError && (
                             <div className="text-red-400 text-sm p-3 bg-red-900/20 rounded-lg">
                                 {errorMsg}
                             </div>
                         )}
-                        
+
                         {!isLoading && !isError && userChats && userChats.length > 0 && (
                             userChats.map(chat => (
                                 <Chat
@@ -77,7 +80,7 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
                                 />
                             ))
                         )}
-                        
+
                         {!isLoading && !isError && (!userChats || userChats.length === 0) && (
                             <div className="text-gray-500 text-sm text-center py-4">
                                 No chats yet. Start a new conversation!
@@ -90,32 +93,5 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
     );
 };
 
-const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
-    const { handleApiCall, isLoading } = useApiCall(getCurrentChatData);
-
-    const handleSelectCurrentChat = async () => {
-        if (isLoading) return; // Prevent multiple clicks
-        
-        const dataFromServer = await handleApiCall([chatID]);
-        if (dataFromServer) {
-            console.log("Data from the server ", dataFromServer);
-            dispatch(initializeCurrentChat(dataFromServer));
-        }
-    };
-
-    return (
-        <div
-            className={`
-        flex justify-between items-center p-2 sm:p-3 w-full text-sm sm:text-base rounded-lg cursor-pointer transition-colors duration-200
-        ${isSelected ? 'bg-gray-700' : 'text-white hover:bg-gray-800'}
-        ${isLoading ? 'opacity-50 cursor-wait' : ''}
-      `}
-            onClick={handleSelectCurrentChat}
-        >
-            <span className="truncate flex-1">{chatTitle}</span>
-            {isLoading && <span className="ml-2 text-xs">...</span>}
-        </div>
-    );
-};
 
 export default SidebarContent;

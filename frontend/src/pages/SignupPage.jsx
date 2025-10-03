@@ -26,8 +26,8 @@ const SignupPage = () => {
   // Creates the account and tells the user to login
   const handleSignUp = async (event) => {
     event.preventDefault()
-    const dataFromServer = await handleApiCall([{ firstName, lastName, username, email, password }])
-    if (dataFromServer) {
+    const response = await handleApiCall([{ firstName, lastName, username, email, password }])
+    if (response.success) {
       navigate("/login", { replace: true })
     }
   }

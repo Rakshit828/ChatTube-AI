@@ -7,7 +7,6 @@ import { getVideoTranscript, updateChat } from "../../api/chats";
 import { setIsTranscriptGeneratedToTrue, updateCurrentChat } from "../../features/chatsSlice.js";
 import { isValidYouTubeUrlOrId } from "../../helpers/chatHelpers.js";
 
-
 const UrlInput = () => {
   const dispatch = useDispatch();
   const currentChat = useSelector((s) => s.chats.currentChat);
@@ -21,139 +20,112 @@ const UrlInput = () => {
   const lastFetchRequestRef = useRef(0);
   const lastUpdateRequestRef = useRef(0);
   const mountedRef = useRef(true);
-  const videoURLRef = useRef(videoURL)
 
   useEffect(() => {
     return () => { mountedRef.current = false; };
   }, []);
 
   useEffect(() => {
-    videoURLRef.current = videoURL
-  }, [videoURL])
-
-  // useEffect(() => {
-  //   if (!isEditing) setVideoURL(youtubeVideoUrl || "");
-  // }, [youtubeVideoUrl, isEditing]);
-
-  useEffect(() => {
-    setVideoURL(youtubeVideoUrl)
-  }, [youtubeVideoUrl])
+    setVideoURL(youtubeVideoUrl || "");
+  }, [youtubeVideoUrl]);
 
   const {
     isLoading: isLoadingFetch,
     loadingMsg: loadingMsgFetch,
-    isError: isErrorFetch,
-    errorMsg: errorMsgFetch,
-    setIsError: setIsErrorFetch,
-    setErrorMsg: setErrorMsgFetch,
     handleApiCall: handleApiCallFetch
   } = useApiCall(getVideoTranscript, "Generating transcript");
 
   const {
     isLoading: isLoadingUpdate,
-    loadingMsg: loadingMsgUpdate,
-    isError: isErrorUpdate,
-    errorMsg: errorMsgUpdate,
-    setIsError: setIsErrorUpdate,
-    setErrorMsg: setErrorMsgUpdate,
     handleApiCall: handleApiCallUpdate
   } = useApiCall(updateChat, "Saving video URL");
 
-
   const isAnyLoading = isLoadingFetch || isLoadingUpdate;
 
+  // Clear messages after 3 seconds
   useEffect(() => {
-    if (localError || errorMsgFetch || errorMsgUpdate || successMessage) {
+    if (localError || successMessage) {
       const timer = setTimeout(() => {
         setLocalError("");
         setSuccessMessage("");
-        setIsErrorFetch(false);
-        setErrorMsgFetch("");
-        setIsErrorUpdate(false);
-        setErrorMsgUpdate("");
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [localError, errorMsgFetch, errorMsgUpdate, successMessage, setIsErrorFetch, setErrorMsgFetch, setIsErrorUpdate, setErrorMsgUpdate]);
+  }, [localError, successMessage]);
 
+  // Fetch transcript when videoId changes and transcript not yet generated
   useEffect(() => {
     const run = async () => {
-      if (!videoId) return;
-      if (isTranscriptGenerated) return;
+      if (!videoId || isTranscriptGenerated) return;
+
       lastFetchRequestRef.current += 1;
       const requestId = lastFetchRequestRef.current;
-      setLocalError("");
-      setSuccessMessage("");
+
       const response = await handleApiCallFetch([videoId]);
       if (!mountedRef.current || requestId !== lastFetchRequestRef.current) return;
 
-      if (!response.success) {
-        setLocalError(response.data?.message || 'Failed to fetch transcript');
-      } else if (response.success) {
-        dispatch(setIsTranscriptGeneratedToTrue(true));
-        setSuccessMessage('Transcript generated');
+      if (response && response.success) {
+        dispatch(setIsTranscriptGeneratedToTrue());
+        setSuccessMessage("Transcript generated successfully!");
       }
     };
     run();
   }, [videoId, isTranscriptGenerated, handleApiCallFetch, dispatch]);
 
-
   const handleSubmit = useCallback(async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
+
     setLocalError("");
     setSuccessMessage("");
-    setIsErrorUpdate(false);
-    setErrorMsgUpdate("");
-    setIsErrorFetch(false);
-    setErrorMsgFetch("");
-    const trimmed = (videoURLRef.current || "").trim();
+
+    const trimmed = (videoURL || "").trim();
+
     if (!trimmed) {
-      setLocalError('Please enter a YouTube URL or ID');
+      setLocalError("Please enter a YouTube URL or ID");
       return;
     }
+
     if (!isValidYouTubeUrlOrId(trimmed)) {
-      setLocalError('Invalid YouTube URL or ID');
+      setLocalError("Invalid YouTube URL or ID");
       return;
     }
-    console.log("YOutube video", youtubeVideoUrl, "Trimmed / videoURL: ", trimmed)
-    if ((youtubeVideoUrl || '').trim() === trimmed) {
+
+    if ((youtubeVideoUrl || "").trim() === trimmed) {
       setIsEditing(false);
+      setSuccessMessage("No changes to save");
       return;
     }
 
     lastUpdateRequestRef.current += 1;
     const requestId = lastUpdateRequestRef.current;
-    dispatch(setIsTranscriptGeneratedToTrue(false)); // Runs the useEffect to fetch the transcript
+
     const payload = { youtubeVideoUrl: trimmed };
     const updateResponse = await handleApiCallUpdate([selectedChatId, payload]);
-     
-    console.log("From update chat (server data): ", updateResponse)
 
     if (!mountedRef.current || requestId !== lastUpdateRequestRef.current) return;
 
-    console.log("Updated data type", typeof updateResponse === 'object')
-    
-    // Error Check for update
-    if (updateResponse && !updateResponse.success) {
-      // console.log("From update chat (if update data is not successful): ", updateResponse)
-      setLocalError(updateResponse.data?.message || 'Failed to update URL');
-      dispatch(setIsTranscriptGeneratedToTrue(false));
+    if (!updateResponse.success) {
+      setLocalError(updateResponse.data?.message || "Failed to update URL");
       return;
     }
 
-    // Handling successful update
-    if (updateResponse) {
-      dispatch(updateCurrentChat(updateResponse));
+    if (updateResponse.success) {
+      dispatch(updateCurrentChat(updateResponse.data));
       setIsEditing(false);
-      setSuccessMessage('URL saved');
+      setSuccessMessage("URL saved successfully!");
     }
-  }, [selectedChatId, youtubeVideoUrl, handleApiCallUpdate, dispatch, setIsErrorUpdate, setErrorMsgUpdate, setIsErrorFetch, setErrorMsgFetch]);
-  // setting videoURL as a dependency causes race condition
+  }, [videoURL, selectedChatId, youtubeVideoUrl, handleApiCallUpdate, dispatch]);
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    setLocalError("");
+    setSuccessMessage("");
+  };
 
-  const inputDisabled = isTranscriptGenerated && !isEditing;
-  const canEdit = !isAnyLoading && !isEditing;
-  const canSave = !isAnyLoading && (isEditing || !isTranscriptGenerated) && videoURL.trim().length > 0;
+  // Logic for disabling/enabling input and buttons
+  const inputDisabled = isTranscriptGenerated && !isEditing || isAnyLoading;
+  const canEdit = isTranscriptGenerated && !isEditing && !isAnyLoading;
+  const canSave = videoURL.trim().length > 0 && (isEditing || !isTranscriptGenerated) && !isAnyLoading;
 
   return (
     <div className="mx-auto w-full max-w-full px-2 sm:max-w-md">
@@ -165,28 +137,24 @@ const UrlInput = () => {
             value={videoURL}
             onChange={(e) => setVideoURL(e.target.value)}
             placeholder="Enter YouTube URL or ID"
-            disabled={inputDisabled || isAnyLoading}
+            disabled={inputDisabled}
             className={`flex-1 px-2 py-1.5 rounded-xl bg-gray-800 text-white placeholder-gray-400 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${inputDisabled ? 'opacity-70 cursor-not-allowed' : ''}`}
           />
 
           <button
             type="submit"
             disabled={!canSave}
-            title={isTranscriptGenerated && !isEditing ? 'Transcript already generated. Click edit to change URL.' : 'Generate transcript / save URL'}
+            title={isTranscriptGenerated && !isEditing ? "Click Edit to change URL" : "Save URL and generate transcript"}
             className={`rounded-xl px-2 py-1.5 shadow-md flex items-center justify-center transition ${canSave ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-600 cursor-not-allowed'} text-white`}
           >
-            {(!isTranscriptGenerated || isEditing) ? <FileText size={20} /> : <Check size={20} />}
+            {isTranscriptGenerated && !isEditing ? <Check size={20} /> : <FileText size={20} />}
           </button>
-          
+
           <button
             type="button"
-            onClick={() => {
-              setIsEditing(true);
-              setLocalError("");
-              setSuccessMessage("");
-            }}
+            onClick={handleEdit}
             disabled={!canEdit}
-            title="Edit URL"
+            title={canEdit ? "Edit URL to change it" : "Already editing or no transcript yet"}
             className={`rounded-xl px-2 py-1.5 shadow-md flex items-center justify-center transition ${canEdit ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600 cursor-not-allowed'} text-white`}
           >
             <Edit size={20} />
@@ -196,12 +164,12 @@ const UrlInput = () => {
             <button
               type="button"
               onClick={() => {
-                setVideoURL(youtubeVideoUrl || '');
+                setVideoURL(youtubeVideoUrl || "");
                 setIsEditing(false);
-                setLocalError('');
-                setSuccessMessage('Edit cancelled');
+                setLocalError("");
+                setSuccessMessage("Edit cancelled");
               }}
-              className="rounded-xl px-2 py-1.5 shadow-md flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-r-xl"
+              className="rounded-xl px-2 py-1.5 shadow-md flex items-center justify-center bg-red-600 hover:bg-red-700 text-white"
               title="Cancel editing"
             >
               <X size={20} />
@@ -210,16 +178,16 @@ const UrlInput = () => {
         </div>
 
         <div className="mt-1">
-          {(isLoadingFetch || isLoadingUpdate) && (
+          {isAnyLoading && (
             <div className="text-gray-400 text-sm p-2 bg-gray-800/50 rounded-lg flex gap-2 items-center">
               <ThreeDotLoader />
-              <span>{isLoadingFetch ? loadingMsgFetch : loadingMsgUpdate}</span>
+              <span>{isLoadingFetch ? "Generating transcript..." : "Saving URL..."}</span>
             </div>
           )}
 
-          {!isAnyLoading && (isErrorFetch || isErrorUpdate || localError) && (
+          {!isAnyLoading && (localError) && (
             <div className="text-red-400 text-sm p-2 bg-red-900/20 rounded-lg">
-              <strong>Error:</strong>&nbsp;{localError || errorMsgFetch || errorMsgUpdate}
+              <strong>Error:</strong>&nbsp;{localError}
             </div>
           )}
 

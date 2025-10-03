@@ -4,6 +4,7 @@ from langchain_chroma import Chroma
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda, RunnableSequence
 from .youtube import load_video_transcript
 from .utils import prompt, Utilities
+from .exceptions import VectorDatabaseError, RetrieverError
 
 from src.utils.utils import get_video_id
 
@@ -43,28 +44,50 @@ class AiComponents:
         return response
     
 
-    def check_for_transcript(self, user_id, video_url_or_id):
-        video_id = get_video_id(video_url_or_id)
-        collection = self.vector_db._collection
-        results = collection.get(
-            where={
-                "$and": [
-                    {"user_id": user_id},
-                    {"video_id": video_id}
-                ]
-            },
-            limit=1
-        )
-        exists = len(results['ids']) > 0
-        return exists
+    async def check_for_transcript(self, user_id, video_url_or_id):
+        try:
+            video_id = get_video_id(video_url_or_id)
+            collection = self.vector_db._collection
+            results = collection.get(
+                where={
+                    "$and": [
+                        {"user_id": user_id},
+                        {"video_id": video_id}
+                    ]
+                },
+                limit=1
+            )
+            exists = len(results['ids']) > 0
+            return exists
+        except:
+            raise VectorDatabaseError()
+    
+
+    async def delete_video_transcript(self, user_id, video_url_or_id):
+        try:
+            video_id = get_video_id(video_url_or_id)
+            collection = self.vector_db._collection
+            collection.delete(
+                where={
+                    "$and": [
+                        {"user_id": user_id},
+                        {"video_id": video_id}
+                    ]
+                }
+            )
+            return True
+        except:
+            raise VectorDatabaseError()
     
 
     def retrieve_relevant_context(self, data):
-        self.retriever.search_type = data['search_type']
-        self.retriever.search_kwargs = data['search_kwargs']
- 
-        context = self.retriever.invoke(input=data['query'])
-        return context
+        try:
+            self.retriever.search_type = data['search_type']
+            self.retriever.search_kwargs = data['search_kwargs']
+            context = self.retriever.invoke(input=data['query'])
+            return context
+        except:
+            raise RetrieverError()
     
 
     def build_chains(self):
