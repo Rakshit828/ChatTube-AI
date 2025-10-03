@@ -1,9 +1,10 @@
 import { useRef, useEffect, useState } from "react";
 import ChatInput from "./ChatInput.jsx";
 import UrlInput from "./UrlInput.jsx";
+import FormattedResponse from "./FormattedResponse.jsx";
 import { User, Bot, Play } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { addNewQuestionsAnwers } from "../../features/chatsSlice.js";
+import { addNewQuestionsAnswers, updateLastAnswer } from "../../features/chatsSlice.js";
 import ThreeDotLoader from "./ThreeDotLoader.jsx";
 import useApiCall from "../../hooks/useApiCall.js";
 import { createNewQA, getResponseFromLLM } from "../../api/chats.js";
@@ -13,15 +14,14 @@ const ChatArea = () => {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [isFirstRender, setIsFirstRender] = useState(true);
-  
+
   const currentChat = useSelector(state => state.chats.currentChat);
   const { selectedChatId, videoId, embedUrl, questionsAnswers } = currentChat;
-  
+
   const [query, setQuery] = useState("");
-  const [answer, setAnswer] = useState("");
-  
+
   const dispatch = useDispatch();
- 
+
   const {
     isLoading: isLoadingResponse,
     loadingMsg: loadingMsgResponse,
@@ -29,44 +29,59 @@ const ChatArea = () => {
     errorMsg: errorMsgResponse,
     handleApiCall: handleApiCallResponse
   } = useApiCall(getResponseFromLLM, "Thinking");
-  
+
   const {
     isLoading: isLoadingSave,
     loadingMsg: loadingMsgSave,
     isError: isErrorSave,
-    errorMsg: erroMsgSave,
+    errorMsg: errorMsgSave,
     handleApiCall: handleApiCallSave
   } = useApiCall(createNewQA)
 
   const handleGetResponse = async () => {
-    // Store user's question first
-    dispatch(addNewQuestionsAnwers({
-      query: query.trim(),
-      answer: "", // empty string for now
+    const currentQuery = query.trim();
+
+    if (!currentQuery) return;
+
+    // Step 1: Add the question to Redux (with empty answer)
+    dispatch(addNewQuestionsAnswers({
+      query: currentQuery,
       chatUID: selectedChatId
     }));
 
-    const response = await handleApiCallResponse([videoId, query]);
+    // Step 2: Get response from LLM
+    const response = await handleApiCallResponse([videoId, currentQuery]);
 
-    // Update the last question-answer entry with the response
-    const updatedAnswer = response.data || "Error: " + errorMsgResponse;
-    dispatch(addNewQuestionsAnwers({
-      query: query.trim(),
-      answer: updatedAnswer,
+    const answerText = response.success && response.data
+      ? response.data
+      : `Error: ${errorMsgResponse || "Failed to get response"}`;
+
+    // Step 3: Update the answer in Redux
+    dispatch(updateLastAnswer({
+      answer: answerText,
       chatUID: selectedChatId
     }));
+
+    // Step 4: Save to database
+    if (response.success) {
+      await handleSaveQA(currentQuery, answerText);
+    }
   };
-  
 
-  const handleSaveQA = async () => {
+
+  const handleSaveQA = async (questionText, answerText) => {
     const qaData = {
-      query: query,
-      answer: answer,
+      query: questionText,
+      answer: answerText,
       chat_uid: selectedChatId
     }
-    const response = await handleApiCallSave([qaData])
-    if(response.success){
-      console.log("QA created successfully")
+
+    const response = await handleApiCallSave([qaData]);
+
+    if (response.success) {
+      console.log("QA saved successfully to database");
+    } else {
+      console.error("Failed to save QA:", errorMsgSave);
     }
   }
 
@@ -142,16 +157,16 @@ const ChatArea = () => {
 
             {/* Questions & Answers */}
             {questionsAnswers && questionsAnswers.length > 0 && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {questionsAnswers.map((qa, index) => (
-                  <div key={index} className="space-y-4">
+                  <div key={index} className="space-y-4 pb-6 border-b border-gray-800 last:border-b-0 last:pb-0">
                     {/* User query */}
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <User className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 text-base text-gray-100 leading-relaxed break-words word-break-break-all">
-                        {qa.query}
+                        <strong className="text-2xl">{qa.query}</strong>
                       </div>
                     </div>
 
@@ -161,16 +176,19 @@ const ChatArea = () => {
                         <Bot className="w-4 h-4 text-gray-300" />
                       </div>
                       <div className="flex-1 text-base text-gray-200 leading-relaxed break-words whitespace-pre-wrap">
-                        {isLoadingResponse && index === questionsAnswers.length - 1 ? (
+                        {!qa.answer && isLoadingResponse && index === questionsAnswers.length - 1 ? (
                           <div className="flex items-center gap-2">
                             {loadingMsgResponse} <ThreeDotLoader size={10} />
                           </div>
-                        ) : isErrorResponse && index === questionsAnswers.length - 1 ? (
-                          <div className="text-red-600">{errorMsgResponse}</div>
+                        ) : !qa.answer && !isLoadingResponse && index === questionsAnswers.length - 1 ? (
+                          <div className="text-yellow-500">Waiting for response...</div>
+                        ) : qa.answer ? (
+                          <FormattedResponse text={qa.answer} />
                         ) : (
-                          qa.answer
+                          <div className="text-gray-500">No response yet</div>
                         )}
                       </div>
+
                     </div>
                   </div>
                 ))}
@@ -190,6 +208,7 @@ const ChatArea = () => {
             query={query}
             setQuery={setQuery}
             generateResponse={handleGetResponse}
+            isLoading={isLoadingResponse}
           />
         </div>
       </div>

@@ -21,10 +21,10 @@ export const chatsSlice = createSlice({
       const payload = snakeKeysToCamel(action.payload)
       state.userChats = payload
     },
-    
+
     deleteUserChat: (state, action) => {
       const payload = snakeKeysToCamel(action.payload)
-      state.userChats = state.userChats.filter((chat) => chat.uuid !== payload.uuid )
+      state.userChats = state.userChats.filter((chat) => chat.uuid !== payload.uuid)
     },
 
     updateUserChats: (state, action) => {
@@ -45,7 +45,7 @@ export const chatsSlice = createSlice({
 
     initializeCurrentChat: (state, action = {}) => {
       //To check for empty object
-      if(typeof action.payload === 'object' && Object.keys(action.payload).length === 0){
+      if (typeof action.payload === 'object' && Object.keys(action.payload).length === 0) {
         state.currentChat = initialState.currentChat
         return;
       }
@@ -57,16 +57,28 @@ export const chatsSlice = createSlice({
       console.log("Current Chat: ", state.currentChat)
     },
 
-    updateQAs: (state, action) => {
-      state.currentChat.questionsAnswers = state.currentChat.questionsAnswers.slice(0, -1)
-      state.currentChat.questionsAnswers.push(action.payload)
+    // Add a new Q&A entry (used when user sends a question)
+    addNewQuestionsAnswers: (state, action) => {
+      const { query, chatUID } = action.payload
+
+      if (state.currentChat.selectedChatId === chatUID) {
+        state.currentChat.questionsAnswers.push({
+          query: query,
+          answer: "" // Initially empty, will be updated when response arrives
+        })
+      }
     },
 
-    // addNewQuestionsAnswers: (state, action) => {
-    //   const payload = snakeKeysToCamel(action.payload)
-    //   state.currentChat.q
-    // },
-    
+    // Update the answer for the last Q&A entry
+    updateLastAnswer: (state, action) => {
+      const { answer, chatUID } = action.payload
+
+      if (state.currentChat.selectedChatId === chatUID &&
+        state.currentChat.questionsAnswers.length > 0) {
+        const lastIndex = state.currentChat.questionsAnswers.length - 1
+        state.currentChat.questionsAnswers[lastIndex].answer = answer
+      }
+    },
 
     setIsTranscriptGeneratedToTrue: (state, action) => {
       state.currentChat.isTranscriptGenerated = action.payload ?? true;
@@ -85,9 +97,9 @@ export const chatsSlice = createSlice({
 export const {
   initializeCurrentChat,
   initializeUserChats,
-  makeQuestionsAnswers,
   addNewChat,
-  addNewQuestionsAnwers,
+  addNewQuestionsAnswers,
+  updateLastAnswer,
   setIsTranscriptGeneratedToTrue,
   updateCurrentChat,
   deleteUserChat,

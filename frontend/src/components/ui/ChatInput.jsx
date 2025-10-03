@@ -5,21 +5,22 @@ const ChatInput = ({
   query,
   setQuery,
   generateResponse,
+  isLoading = false
 }) => {
 
   const textareaRef = useRef(null);
 
   const handleSendQueries = async (event) => {
-    // A function which sends the query to the server and gets the response from the LLM
-
     event?.preventDefault();
-    if (!query.trim()) return;
+    
+    // Prevent sending if already loading or query is empty
+    if (!query.trim() || isLoading) return;
 
     const textarea = textareaRef.current;
     // lock current height to prevent immediate layout jump when we clear query
     if (textarea) textarea.style.height = `${textarea.clientHeight}px`;
 
-    await generateResponse()
+    await generateResponse();
 
     setQuery("");
     // release height next frame so the auto-resize useEffect can recalc without a jump
@@ -42,7 +43,7 @@ const ChatInput = ({
 
   // Enter to send, Shift+Enter to newline
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !isLoading) {
       e.preventDefault();
       handleSendQueries();
     }
@@ -64,19 +65,23 @@ const ChatInput = ({
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           rows={1}
+          disabled={isLoading}
           className="flex-1 resize-none bg-gray-700 text-white rounded-3xl 
                      px-2 sm:px-3 py-1.5 sm:py-2 
                      leading-[1.5] text-sm sm:text-base 
                      focus:outline-none 
-                     custom-dark-scrollbar"
+                     custom-dark-scrollbar
+                     disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <button
           type="submit"
           aria-label="Send message"
+          disabled={isLoading || !query.trim()}
           className="bg-blue-500 text-white 
                      p-2 sm:p-3 
                      rounded-full flex items-center justify-center 
-                     hover:bg-blue-600 transition"
+                     hover:bg-blue-600 transition
+                     disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
         >
           <PaperAirplaneIcon className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
