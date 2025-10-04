@@ -1,7 +1,8 @@
-from sqlmodel import SQLModel, Field, Column, Relationship, text
+from sqlmodel import SQLModel, Field, Column, Relationship, text, func
 import sqlalchemy.dialects.postgresql as pg
 from sqlalchemy import ForeignKey
 from uuid import UUID
+from datetime import datetime
 from typing import Optional, TYPE_CHECKING, List
 
 
@@ -18,6 +19,7 @@ class Chats(SQLModel, table=True):
     )
     title: str
     youtube_video_url: str
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, server_default=func.now()))
 
     user_uid: UUID = Field(
         sa_column=Column(

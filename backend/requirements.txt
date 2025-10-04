@@ -1,3 +1,5 @@
+
+# Application development
 fastapi
 uvicorn
 fastapi[standard]
@@ -8,6 +10,11 @@ asyncpg
 bcrypt
 
 
+# Migrations
+alembic
+
+
+# AI Features
 langchain
 langchain_community
 huggingface
@@ -18,3 +25,5 @@ huggingface
 sentence-transformers
 chromadb
 langchain_chroma
+
+

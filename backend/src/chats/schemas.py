@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 import re
 from uuid import UUID
 from typing import Optional, Any, List
+from datetime import datetime
 from .exceptions import InvalidYoutubeURLError
 
 class CreateChatSchema(BaseModel):
@@ -41,7 +42,8 @@ class UpdateChatSchema(BaseModel):
 class ResponseChatSchema(BaseModel):
     uuid: UUID
     title: str
-    youtube_video_url: str 
+    youtube_video_url: str
+    created_at: datetime
 
     class Config:
         orm_mode = True

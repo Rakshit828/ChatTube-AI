@@ -13,6 +13,8 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
     const userChats = useSelector(state => state.chats.userChats);
     const currentChat = useSelector(state => state.chats.currentChat);
     const { selectedChatId } = currentChat || {};
+    
+    console.log("USER CHATS ARE : ", userChats)
 
     const dispatch = useDispatch();
 

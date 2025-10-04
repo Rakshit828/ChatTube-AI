@@ -1,5 +1,15 @@
-from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
-
+from youtube_transcript_api import (
+    YouTubeTranscriptApi, 
+    TranscriptsDisabled, 
+    NoTranscriptFound,
+    VideoUnavailable, 
+)
+from .exceptions import (
+    EnglishTranscripNotFoundError,
+    TranscriptNotAllowedError,
+    VideoNotFoundError,
+    UnexpectedErrorOccurredInTranscriptError
+)
 
 youtube_transcript_api = YouTubeTranscriptApi()
 
@@ -14,6 +24,14 @@ def load_video_transcript(video_data: dict[str, str]) -> str:
         print(video_data)
         return video_data
     
-    except Exception as e:
-        print(f"Transcript Failed {e}")
-        raise Exception
+    except NoTranscriptFound:
+        raise EnglishTranscripNotFoundError()
+    
+    except TranscriptsDisabled:
+        raise TranscriptNotAllowedError()
+    
+    except VideoUnavailable:
+        raise VideoNotFoundError()
+    
+    except Exception:
+        raise UnexpectedErrorOccurredInTranscriptError()

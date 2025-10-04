@@ -7,7 +7,7 @@ from .services import chat_service
 from src.db.main import get_session
 from src.auth.dependencies import AccessTokenBearer
 from typing import Dict, List
-from .exceptions import (
+from src.ai.exceptions import (
     TranscriptDoesNotExistError,
     TranscriptAlreadyExistError
 )
@@ -71,7 +71,7 @@ async def delete_chat(
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
     user_id = decoded_token_data['sub']
-    youtube_video_url = chat_service.get_video_url_by_chatid(chat_uid, session)
+    youtube_video_url = await chat_service.get_video_url_by_chatid(chat_uid, session)
     is_transcript_deleted = await request.app.state.ai_components.delete_video_transcript(user_id, youtube_video_url)
     result = await chat_service.delete_chat(chat_uid, session)
 
@@ -136,13 +136,12 @@ async def generate_tanscript(
         "video_id": video_id
     }
 
-    try:
-        request.app.state.ai_components.chains['general_chain'].invoke(data)
-        return JSONResponse(
-            content="Sucessful"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail={"unexpected error occurred"})
+    
+    request.app.state.ai_components.chains['general_chain'].invoke(data)
+
+    return JSONResponse(
+        content="Sucessful"
+    )
 
 
 

@@ -209,6 +209,7 @@ const ChatArea = () => {
             setQuery={setQuery}
             generateResponse={handleGetResponse}
             isLoading={isLoadingResponse}
+            isDisabled={true}
           />
         </div>
       </div>

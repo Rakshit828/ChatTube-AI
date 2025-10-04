@@ -7,25 +7,22 @@ from typing import List
 
 
 prompt = PromptTemplate(
-    template= """
-        Below is the context from the transcript of the youtube
-        video. You have to solve my query from the given context only. That's it. Just the given context. No
-        extra information.
+    template="""
+        You are given the context from a YouTube video transcript. 
+        Answer the query using **only** the information provided in the context. 
+        Do not include any information that is not present in the context.
 
-        CONTEXT : \n
+        CONTEXT:
         {context}
 
-        \n\n\n
-
-        MY QUERY : \n
+        QUERY:
         {user_query}
 
-
-        \n
-        Answer as humanly as possible.
+        Answer as clearly and naturally as possible, using the context only.
     """,
     input_variables=['context', 'user_query']
 )
+
 
 
 class Utilities:

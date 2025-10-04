@@ -43,7 +43,11 @@ const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
         if (response.success) {
             setModalOpen(false);
             dispatch(deleteUserChat({ uuid: chatID }));
-            dispatch(initializeCurrentChat({}));
+
+            if (isSelected) {
+                dispatch(initializeCurrentChat({}));
+            }
+
         }
     };
 
@@ -125,7 +129,7 @@ const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
                     <span className="truncate flex-1">{chatTitle}</span>
                 )}
 
-                {isSelected && !isEditingTitle && (
+                {!isEditingTitle && (
                     <div ref={menuRef} className="relative ml-2">
                         <button
                             className="p-1 rounded hover:bg-gray-600"
@@ -144,7 +148,10 @@ const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
                                 </button>
                                 <button
                                     className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-700 rounded-b-lg"
-                                    onClick={() => setModalOpen(true)}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // prevent parent onClick
+                                        setModalOpen(true);
+                                    }}
                                 >
                                     <Trash2 size={16} /> Delete
                                 </button>

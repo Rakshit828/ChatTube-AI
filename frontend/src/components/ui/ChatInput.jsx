@@ -1,5 +1,6 @@
 import { useRef, useEffect } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
+import { useSelector } from "react-redux";
 
 const ChatInput = ({
   query,
@@ -7,6 +8,10 @@ const ChatInput = ({
   generateResponse,
   isLoading = false
 }) => {
+
+  const { selectedChatId } = useSelector(state => state.chats.currentChat)
+  
+  const isChatSelected = !!selectedChatId
 
   const textareaRef = useRef(null);
 
@@ -63,9 +68,9 @@ const ChatInput = ({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder={!isChatSelected ? "Enter a video to start chatting..." : "Type a message..."}
           rows={1}
-          disabled={isLoading}
+          disabled={!isChatSelected || isLoading}
           className="flex-1 resize-none bg-gray-700 text-white rounded-3xl 
                      px-2 sm:px-3 py-1.5 sm:py-2 
                      leading-[1.5] text-sm sm:text-base 

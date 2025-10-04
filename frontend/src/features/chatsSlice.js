@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { snakeKeysToCamel, getYouTubeEmbedUrl, getYouTubeVideoId } from "../helpers/chatHelpers";
 
 export const initialState = {
-  userChats: [], // A list of objects with keys: uuid, title, youtube_video
+  userChats: [], // A list of objects with keys: uuid, title, youtube_video_url
   currentChat: {
     youtubeVideoUrl: "",
     selectedChatId: "",
@@ -20,6 +20,7 @@ export const chatsSlice = createSlice({
     initializeUserChats: (state, action) => {
       const payload = snakeKeysToCamel(action.payload)
       state.userChats = payload
+      state.userChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     },
 
     deleteUserChat: (state, action) => {
@@ -40,7 +41,7 @@ export const chatsSlice = createSlice({
 
     addNewChat: (state, action) => {
       const payload = snakeKeysToCamel(action.payload)
-      state.userChats.push(payload)
+      state.userChats.unshift(payload)
     },
 
     initializeCurrentChat: (state, action = {}) => {
@@ -50,7 +51,13 @@ export const chatsSlice = createSlice({
         return;
       }
       const payload = snakeKeysToCamel(action.payload)
-      console.log("Payload : ", payload)
+
+      if(action.payload?.type === 'newchat'){
+        payload['selectedChatId'] = payload.uuid
+        payload['isTranscriptGenerated'] = false
+        payload['questionsAnswers'] = []
+      }
+
       payload['embedUrl'] = getYouTubeEmbedUrl(payload.youtubeVideoUrl)
       payload['videoId'] = getYouTubeVideoId(payload.youtubeVideoUrl)
       state.currentChat = payload
@@ -88,9 +95,12 @@ export const chatsSlice = createSlice({
       const payload = snakeKeysToCamel(action.payload)
       state.currentChat.selectedChatId = payload.uuid
       state.currentChat.youtubeVideoUrl = payload.youtubeVideoUrl
-      state.currentChat.embedUrl = getYouTubeEmbedUrl(state.currentChat.youtubeVideoUrl)
-      state.currentChat.videoId = getYouTubeVideoId(state.currentChat.youtubeVideoUrl)
+      state.currentChat.embedUrl = getYouTubeEmbedUrl(payload.youtubeVideoUrl)
+      state.currentChat.videoId = getYouTubeVideoId(payload.youtubeVideoUrl) 
+      state.currentChat.isTranscriptGenerated = false 
     }
+
+
   }
 })
 

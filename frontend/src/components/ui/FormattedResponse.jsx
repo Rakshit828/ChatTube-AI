@@ -1,5 +1,3 @@
-import React from 'react';
-
 const FormattedResponse = ({ text }) => {
   if (!text) return null;
 

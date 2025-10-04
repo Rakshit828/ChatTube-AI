@@ -3,14 +3,17 @@ import { FileText, Edit, Check, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import useApiCall from '../../hooks/useApiCall.js';
 import ThreeDotLoader from './ThreeDotLoader';
-import { getVideoTranscript, updateChat } from "../../api/chats";
-import { setIsTranscriptGeneratedToTrue, updateCurrentChat } from "../../features/chatsSlice.js";
+import { createNewChat, getVideoTranscript, updateChat } from "../../api/chats";
+import { addNewChat, initializeCurrentChat, setIsTranscriptGeneratedToTrue, updateCurrentChat } from "../../features/chatsSlice.js";
 import { isValidYouTubeUrlOrId } from "../../helpers/chatHelpers.js";
+
 
 const UrlInput = () => {
   const dispatch = useDispatch();
   const currentChat = useSelector((s) => s.chats.currentChat);
   const { youtubeVideoUrl, videoId, selectedChatId, isTranscriptGenerated } = currentChat || {};
+
+  const isChatSelected = !!selectedChatId
 
   const [videoURL, setVideoURL] = useState(youtubeVideoUrl || "");
   const [isEditing, setIsEditing] = useState(false);
@@ -29,18 +32,32 @@ const UrlInput = () => {
     setVideoURL(youtubeVideoUrl || "");
   }, [youtubeVideoUrl]);
 
+
+  const {
+    handleApiCall: handleApiCallCreateNewChat
+  } = useApiCall(createNewChat, "Creating new chat")
+
   const {
     isLoading: isLoadingFetch,
     loadingMsg: loadingMsgFetch,
-    handleApiCall: handleApiCallFetch
-  } = useApiCall(getVideoTranscript, "Generating transcript");
+    isError: isErrorFetch,
+    errorMsg: errorMsgFetch,
+    setIsError: setIsErrorFetch,
+    handleApiCall: handleApiCallFetch,
+  } = useApiCall(getVideoTranscript, "Loading transcript");
 
   const {
     isLoading: isLoadingUpdate,
+    loadingMsg: loadingMsgUpdate,
+    isError: isErrorUpdate,
+    errorMsg: errorMsgUpdate,
+    setIsError: setIsErrorUpdate,
     handleApiCall: handleApiCallUpdate
   } = useApiCall(updateChat, "Saving video URL");
 
+
   const isAnyLoading = isLoadingFetch || isLoadingUpdate;
+  const isAnyError = isErrorFetch || isErrorUpdate;
 
   // Clear messages after 3 seconds
   useEffect(() => {
@@ -52,6 +69,14 @@ const UrlInput = () => {
       return () => clearTimeout(timer);
     }
   }, [localError, successMessage]);
+
+
+  // To clear error messages when current chat changes
+  useEffect(() => {
+    setIsErrorFetch(false)
+    setIsErrorUpdate(false)
+  }, [selectedChatId, videoId])
+
 
   // Fetch transcript when videoId changes and transcript not yet generated
   useEffect(() => {
@@ -66,7 +91,7 @@ const UrlInput = () => {
 
       if (response && response.success) {
         dispatch(setIsTranscriptGeneratedToTrue());
-        setSuccessMessage("Transcript generated successfully!");
+        setSuccessMessage("Video Loaded successfully!");
       }
     };
     run();
@@ -93,6 +118,23 @@ const UrlInput = () => {
     if ((youtubeVideoUrl || "").trim() === trimmed) {
       setIsEditing(false);
       setSuccessMessage("No changes to save");
+      return;
+    }
+
+
+    // To create a new chat
+    if (!isChatSelected) {
+      const chatData = {
+        title: "New Chat",
+        youtubeVideoUrl: trimmed
+      }
+      const response = await handleApiCallCreateNewChat([chatData])
+      if (response.success) {
+        const newChatData = response.data
+        dispatch(addNewChat(newChatData))
+        newChatData.type = "newchat"
+        dispatch(initializeCurrentChat(newChatData))
+      }
       return;
     }
 
@@ -123,9 +165,22 @@ const UrlInput = () => {
   };
 
   // Logic for disabling/enabling input and buttons
-  const inputDisabled = isTranscriptGenerated && !isEditing || isAnyLoading;
+  const urlTrimmed = videoURL.trim();
+  const isDifferentUrl = urlTrimmed !== (youtubeVideoUrl || "").trim();
+  const inputDisabled = (isTranscriptGenerated && !isEditing) || isAnyLoading;
   const canEdit = isTranscriptGenerated && !isEditing && !isAnyLoading;
-  const canSave = videoURL.trim().length > 0 && (isEditing || !isTranscriptGenerated) && !isAnyLoading;
+
+  // Save button logic
+  const canSave =
+    urlTrimmed.length > 0 &&
+    (
+      // Case 1: error exists and URL is different -> allow save
+      (isAnyError && isDifferentUrl) ||
+      // Case 2: normal case -> editing OR transcript not yet generated
+      (!isAnyError && (isEditing || !isTranscriptGenerated))
+    ) &&
+    !isAnyLoading;
+
 
   return (
     <div className="mx-auto w-full max-w-full px-2 sm:max-w-md">
@@ -181,7 +236,13 @@ const UrlInput = () => {
           {isAnyLoading && (
             <div className="text-gray-400 text-sm p-2 bg-gray-800/50 rounded-lg flex gap-2 items-center">
               <ThreeDotLoader />
-              <span>{isLoadingFetch ? "Generating transcript..." : "Saving URL..."}</span>
+              <span>{isLoadingFetch ? loadingMsgFetch : loadingMsgUpdate}</span>
+            </div>
+          )}
+
+          {isAnyError && (
+            <div className="text-red-400 text-sm p-2 bg-red-900/20 rounded-lg">
+              <strong>Error:</strong>&nbsp;{isErrorFetch ? errorMsgFetch : errorMsgUpdate}
             </div>
           )}
 

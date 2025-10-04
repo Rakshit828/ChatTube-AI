@@ -4,7 +4,7 @@ import Spinner from "./Spinner.jsx";
 import { useDispatch } from "react-redux";
 import useApiCall from "../../hooks/useApiCall.js"
 import { createNewChat } from "../../api/chats.js";
-import { addNewChat } from "../../features/chatsSlice.js";
+import { addNewChat, initializeCurrentChat } from "../../features/chatsSlice.js";
 
 
 const NewChatModal = ({ isOpen, onClose }) => {
@@ -12,13 +12,13 @@ const NewChatModal = ({ isOpen, onClose }) => {
     const [videoURL, setVideoURL] = useState("")
     const dispatch = useDispatch()
 
-    const { 
+    const {
         isLoading,
         isError,
         errorMsg,
         handleApiCall
     } = useApiCall(createNewChat)
-    
+
     if (!isOpen) return null;
 
     const handleCreateNewChat = async (event) => {
@@ -29,12 +29,14 @@ const NewChatModal = ({ isOpen, onClose }) => {
         }
         console.log("New chat model chat data: ", chatData)
         const response = await handleApiCall([chatData])
-        if(response.success){
+        if (response.success) {
             dispatch(addNewChat(response.data))
+            setTitle("")
+            setVideoURL("")
+            onClose()
+            response.data['type'] = "newchat"
+            dispatch(initializeCurrentChat(response.data))
         }
-        setTitle("")
-        setVideoURL("")
-        onClose()
     }
 
     return (
