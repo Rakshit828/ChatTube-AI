@@ -23,4 +23,5 @@ dependencies = [
     "uvicorn>=0.38.0",
     "weaviate-client>=4.22.0",
     "redis>=5.0.0",
+    "openai>=2.52.0",
 ]
