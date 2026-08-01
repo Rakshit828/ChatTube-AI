@@ -5,6 +5,7 @@ from pydantic import BaseModel
 CHAT_HISTORY_KEY: str = "chat:{chat_id}:history"
 
 class ChatHistoryMessageObject(BaseModel):
+    id: str
     message: str
     role: str
 

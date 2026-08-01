@@ -1,17 +1,19 @@
-from sqlalchemy.ext.asyncio.session import AsyncSession
-from src.db.postgres.schemas import (
-    Chats,
-    Videos,
-    VideoProcessingStatusEnum,
-    MessageRoleEnum,
-    Messages,
-)
-from sqlalchemy import insert
-import sqlalchemy.dialects.postgresql as pg
-from sqlalchemy import select, update, delete
-from loguru import logger
+import uuid
 from typing import Any
 
+from loguru import logger
+import sqlalchemy.dialects.postgresql as pg
+from sqlalchemy import delete, func, insert, select, update
+from sqlalchemy.ext.asyncio.session import AsyncSession
+
+from src.db.postgres.schemas import (
+    Chats,
+    ConversationSummary,
+    MessageRoleEnum,
+    Messages,
+    VideoProcessingStatusEnum,
+    Videos,
+)
 
 
 class VideoInfoRepository:
@@ -239,3 +241,57 @@ class MessagesRepository:
             await session.commit()
 
         return deleted_count
+
+
+class ConversationMemoryRepository:
+    async def insert_summary(
+        self,
+        session: AsyncSession,
+        chat_id: str,
+        summary: str,
+        start_message_id: str,
+        last_message_id: str,
+        n_summarized: int,
+        should_commit: bool = True,
+    ) -> ConversationSummary | None:
+        stmt = (
+            pg.insert(ConversationSummary)
+            .values(
+                {
+                    "id": uuid.UUID(chat_id),
+                    "summary": summary,
+                    "start_message": uuid.UUID(start_message_id),
+                    "last_message": uuid.UUID(last_message_id),
+                    "n_summarized": n_summarized,
+                }
+            )
+            .on_conflict_do_update(
+                index_elements=[ConversationSummary.id],
+                set_={
+                    "summary": summary,
+                    "start_message": uuid.UUID(start_message_id),
+                    "last_message": uuid.UUID(last_message_id),
+                    "n_summarized": n_summarized,
+                    "updated_at": func.now(),
+                },
+            )
+            .returning(ConversationSummary)
+        )
+
+        row = (await session.execute(stmt)).scalar_one_or_none()
+
+        if should_commit:
+            await session.commit()
+
+        return row
+
+    async def get_summary_by_chat_id(
+        self,
+        session: AsyncSession,
+        chat_id: str,
+    ) -> list[ConversationSummary] | None:
+        stmt = select(ConversationSummary).where(
+            ConversationSummary.id == uuid.UUID(chat_id)
+        )
+        result = await session.execute(stmt)
+        return [summary for summary in result.scalars().all()]

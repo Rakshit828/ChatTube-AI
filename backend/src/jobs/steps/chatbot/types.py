@@ -14,7 +14,7 @@ class RoutingStateData(TypedDict):
 
 class RoutingLLMInput(TypedDict):
     user_query: str
-    video_length: str
+    video_length: str | None 
 
 
 class RoutingLLMOutput(TypedDict):
@@ -49,3 +49,27 @@ class CreateNewMessageRecordOutput(TypedDict):
     tokens: int
     role: MessageRoleEnum
     created_at: datetime
+
+
+class SummarizeConversationInput(TypedDict):
+    chat_id: str
+    history: list[dict[str, str]]
+
+
+class SummarizeConversationOutput(TypedDict):
+    summary: str
+
+
+class StoreConversationSummaryInput(TypedDict):
+    chat_id: str
+    summary: str
+    start_message_id: str
+    last_message_id: str
+    n_summarized: int
+
+
+class StoreConversationSummaryOutput(TypedDict):
+    chat_id: str
+    summary: str
+    summary_id: str
+    n_summarized: int

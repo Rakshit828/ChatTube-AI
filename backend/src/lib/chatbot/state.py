@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from src.lib.weviate_db.types import YoutubeInfoCollectionObject
 
 
 class RoutingState(BaseModel):
@@ -18,5 +19,6 @@ class RoutingState(BaseModel):
 class AgentState(RoutingState):
     raw_user_query: str
     prompt: str
+    video_chunks: list[YoutubeInfoCollectionObject]
     message_history: list[str]
     summaries: list[str]
