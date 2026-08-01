@@ -5,7 +5,6 @@ from typing import Any
 import redis.asyncio as aioredis
 from src.config import CONFIG
 
-
 _redis_client: aioredis.Redis | None = None
 
 
@@ -26,7 +25,6 @@ async def publish_workflow_status(
     status: str,
     progress: int,
     message: str,
-    extra: dict[str, Any] | None = None,
 ) -> None:
     """Publish a workflow status payload to the Redis channel ``workflow:{chat_id}``."""
     r = get_redis()
@@ -38,7 +36,5 @@ async def publish_workflow_status(
         "message": message,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
-    if extra:
-        payload.update(extra)
 
     await r.publish(f"workflow:{chat_id}", json.dumps(payload))

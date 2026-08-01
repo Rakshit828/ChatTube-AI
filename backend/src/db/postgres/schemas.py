@@ -121,3 +121,32 @@ class Messages(Base):
     __table_args__ = (
         Index("messagses_idx_chat_id_created_at", "chat_id", created_at.desc()),
     )
+
+
+class ConversationSummary(Base):
+    __tablename__ = "conversation_summary"
+    
+    id: Mapped[uuid.UUID] = mapped_column(
+        pg.UUID(as_uuid=True),
+        ForeignKey("chats.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    summary: Mapped[str] = mapped_column(pg.TEXT, nullable=False)
+    start_message: Mapped[uuid.UUID] = mapped_column(
+        pg.UUID(as_uuid=True),
+        ForeignKey("messages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    last_message: Mapped[uuid.UUID] = mapped_column(
+        pg.UUID(as_uuid=True),
+        ForeignKey("messages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    n_summarized: Mapped[int] = mapped_column(pg.INTEGER, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        pg.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        pg.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )

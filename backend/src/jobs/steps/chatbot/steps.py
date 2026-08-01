@@ -8,12 +8,18 @@ import inngest
 from src.domains.chats.repository import MessagesRepository
 from src.db.postgres.schemas import Messages
 
-from .types import GetVideoContextFromVdbInput, GetVideoContextFromVdbOutput, CreateNewMessageRecordInput, CreateNewMessageRecordOutput
+from .types import (
+    GetVideoContextFromVdbInput,
+    GetVideoContextFromVdbOutput,
+    CreateNewMessageRecordInput,
+    CreateNewMessageRecordOutput,
+)
 
 
 # Further things like application level ranking filter. Score filter.
 # Will be done withing this funciton only, for now it is simple returning fixed number of
 # objects inclding all properties
+
 async def get_video_context_from_vdb(
     inputs: GetVideoContextFromVdbInput,
 ) -> GetVideoContextFromVdbOutput:
@@ -36,7 +42,6 @@ async def get_video_context_from_vdb(
     return GetVideoContextFromVdbOutput(data=data)
 
 
-
 async def create_new_message_record(
     inputs: CreateNewMessageRecordInput,
 ) -> CreateNewMessageRecordOutput:
@@ -53,17 +58,13 @@ async def create_new_message_record(
     )
 
     if message is None:
-        raise inngest.NonRetriableError(
-            message="Failed to create message record."
-        )
-    
+        raise inngest.NonRetriableError(message="Failed to create message record.")
+
     return CreateNewMessageRecordOutput(
         message_id=str(message.id),
         chat_id=str(message.chat_id),
         content=message.content,
         tokens=message.tokens,
         role=message.role,
-        created_at=message.created_at
+        created_at=message.created_at,
     )
-
-    
