@@ -4,6 +4,24 @@ from src.db.postgres.schemas import MessageRoleEnum
 from datetime import datetime
 
 
+class RoutingStateData(TypedDict):
+    requires_past_history: bool
+    requires_video_chunks_retrieval: bool
+    requires_video_chapters: bool
+    start_time: str | None
+    end_time: str | None
+
+
+class RoutingLLMInput(TypedDict):
+    user_query: str
+    video_length: str
+
+
+class RoutingLLMOutput(TypedDict):
+    state: RoutingStateData
+    prompt: str
+
+
 class GetVideoContextFromVdbInput(TypedDict):
     video_id: str
     field: str
