@@ -60,6 +60,11 @@ class SummarizeConversationOutput(TypedDict):
     summary: str
 
 
+class PrimaryLLMInput(TypedDict):
+    chat_id: str
+    prompt: str
+
+
 class StoreConversationSummaryInput(TypedDict):
     chat_id: str
     summary: str

@@ -10,6 +10,7 @@ from src.domains.chats.repository import (
     ConversationMemoryRepository,
     MessagesRepository,
 )
+from src.db.redis_db import publish_chat_stream_token
 from src.lib.chatbot.prompts import ROUTING_LLM_TEMPLATE
 from src.lib.chatbot.state import RoutingState
 from src.lib.llm.provider import GroqProvider
@@ -34,6 +35,7 @@ from .types import (
     RoutingStateData,
     GatherMemoryContextInput,
     GatherMemoryContextOutput,
+    PrimaryLLMInput,
     StoreConversationSummaryInput,
     StoreConversationSummaryOutput,
     SummarizeConversationInput,
@@ -235,6 +237,40 @@ async def gather_memory_context(
             for item in summaries
         ],
     )
+
+
+async def primary_llm(inputs: PrimaryLLMInput) -> str:
+    provider = GroqProvider(
+        api_key=CONFIG.GROQ_API_KEY,
+        model="llama-3.3-70b-versatile",
+    )
+    llm_service = LLMService(provider=provider)
+    answer = ""
+    sequence = 0
+
+    try:
+        stream = await llm_service.chat_stream(
+            messages=[{"role": "user", "content": inputs["prompt"]}],
+            temperature=0.2,
+            max_tokens=600,
+        )
+
+        async for chunk in stream:
+            token = chunk.delta or ""
+            if not token:
+                continue
+
+            answer += token
+            await publish_chat_stream_token(
+                chat_id=inputs["chat_id"],
+                token=token,
+                sequence=sequence,
+            )
+            sequence += 1
+    finally:
+        await llm_service.close()
+
+    return answer
 
 
 async def create_new_message_record(

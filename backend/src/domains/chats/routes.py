@@ -11,6 +11,7 @@ from src.app_responses import SuccessResponse
 from src.jobs.config import InngestEventsEnum
 from src.services.inngest_client import inngest_client
 from src.db.redis_db import get_redis
+from src.models.redis import ChatStreamToken
 
 
 import inngest
@@ -81,7 +82,6 @@ async def stream_workflow_status(chat_id: str, request: Request):
         await pubsub.subscribe(channel)
         try:
             while True:
-                # Check for client disconnect
                 if await request.is_disconnected():
                     break
 
@@ -93,7 +93,6 @@ async def stream_workflow_status(chat_id: str, request: Request):
                     data = message["data"]
                     yield f"data: {data}\n\n"
 
-                    # Auto-close on terminal events
                     try:
                         payload = json.loads(data)
                         if (
@@ -104,7 +103,49 @@ async def stream_workflow_status(chat_id: str, request: Request):
                     except json.JSONDecodeError:
                         pass
                 else:
-                    # No message yet — yield a keep-alive comment to prevent timeout
+                    await asyncio.sleep(0.5)
+        finally:
+            await pubsub.unsubscribe(channel)
+            await pubsub.close()
+
+    return StreamingResponse(
+        _event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@chats_router.get("/stream/{chat_id}")
+async def stream_chat_tokens(chat_id: str, request: Request):
+    """SSE endpoint — streams Redis pub/sub tokens for a chat response."""
+
+    async def _event_generator():
+        redis: aioredis.Redis = get_redis()
+        pubsub = redis.pubsub()  # type: ignore
+        channel = ChatStreamToken.build_key(chat_id)
+
+        await pubsub.subscribe(channel)
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+
+                message = await pubsub.get_message(
+                    ignore_subscribe_messages=True, timeout=1.0
+                )
+
+                if message is not None and message["type"] == "message":
+                    data = message["data"]
+                    try:
+                        payload = json.loads(data)
+                        yield f"data: {json.dumps(payload)}\n\n"
+                    except json.JSONDecodeError:
+                        yield f"data: {data}\n\n"
+                else:
                     await asyncio.sleep(0.5)
         finally:
             await pubsub.unsubscribe(channel)

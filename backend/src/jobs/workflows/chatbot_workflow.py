@@ -7,6 +7,7 @@ from src.jobs.steps.chatbot.steps import (
     routing_llm,
     get_video_context_from_vdb,
     gather_memory_context,
+    primary_llm,
 )
 from src.jobs.steps.chatbot.types import (
     RoutingLLMInput,
@@ -15,6 +16,7 @@ from src.jobs.steps.chatbot.types import (
     GetVideoContextFromVdbOutput,
     GatherMemoryContextInput,
     GatherMemoryContextOutput,
+    PrimaryLLMInput,
 )
 
 from src.lib.chatbot.state import RoutingState, AgentState
@@ -22,6 +24,12 @@ from src.models.redis import ChatHistoryMessageObject, ConversationSummary
 from src.db.redis_db import publish_workflow_status
 from src.jobs.utils import SPLITTER
 from src.lib.weviate_db.types import SearchTypeEnum
+from src.lib.chatbot.prompts import PRIMARY_CHATBOT_PROMPT
+from src.lib.chatbot.utils import (
+    format_conversation_summaries,
+    format_video_context,
+    format_message_history,
+)
 
 
 @inngest_client.create_function(
@@ -100,6 +108,27 @@ async def chatbot_workflow(ctx: inngest.Context) -> None:
                 ConversationSummary.model_validate(summary)
                 for summary in memory_context["summaries"]
             ]
+
+        prompt = PRIMARY_CHATBOT_PROMPT.render(
+            user_query=user_query,
+            conversation_history=format_message_history(agent_state.message_history),
+            conversation_summaries=format_conversation_summaries(agent_state.summaries),
+            video_context=format_video_context(agent_state.video_chunks),
+            video_chapters="Not Available",
+        )
+        agent_state.prompt = prompt
+
+        primary_response = await step.run(
+            step_id="primary-llm",
+            handler=lambda: primary_llm(
+                inputs=PrimaryLLMInput(
+                    chat_id=chat_id,
+                    prompt=prompt,
+                )
+            ),
+        )
+
+        logger.info("Primary LLM response complete. Length=%s", len(primary_response))
 
     except inngest.NonRetriableError as e:
         logger.error("StepError occurred. Details are : %s", e.message)
