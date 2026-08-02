@@ -6,16 +6,23 @@ from weaviate.classes.query import Filter
 
 from src.config import CONFIG
 from src.db.postgres.schemas import Messages
-from src.domains.chats.repository import MessagesRepository
+from src.domains.chats.repository import (
+    ConversationMemoryRepository,
+    MessagesRepository,
+)
 from src.lib.chatbot.prompts import ROUTING_LLM_TEMPLATE
 from src.lib.chatbot.state import RoutingState
 from src.lib.llm.provider import GroqProvider
 from src.lib.llm.service import LLMService
+from src.lib.session_memory.service import ChatMemoryService
 from src.lib.weviate_db.client import WeaviateClient
 from src.lib.weviate_db.service import WeaviateService
 from src.lib.weviate_db.types import WeaviateQueryOptions, YoutubeInfoCollectionObject
+from src.models.redis import (
+    ConversationSummary as RedisConversationSummary,
+    ChatHistoryMessageObject as RedisChatHistoryMessage,
+)
 from src.utils import wrap_in_session
-from src.lib.session_memory.service import ChatMemoryService
 
 from .types import (
     CreateNewMessageRecordInput,
@@ -25,12 +32,13 @@ from .types import (
     RoutingLLMInput,
     RoutingLLMOutput,
     RoutingStateData,
+    GatherMemoryContextInput,
+    GatherMemoryContextOutput,
     StoreConversationSummaryInput,
     StoreConversationSummaryOutput,
     SummarizeConversationInput,
     SummarizeConversationOutput,
 )
-from src.domains.chats.repository import ConversationMemoryRepository
 
 
 async def routing_llm(inputs: RoutingLLMInput) -> RoutingLLMOutput:
@@ -110,8 +118,6 @@ async def summarize_conversation_history(
 # Further things like application level ranking filter. Score filter.
 # Will be done withing this funciton only, for now it is simple returning fixed number of
 # objects inclding all properties
-
-
 async def get_video_context_from_vdb(
     inputs: GetVideoContextFromVdbInput,
 ) -> GetVideoContextFromVdbOutput:
@@ -167,6 +173,67 @@ async def store_conversation_summary(
         summary=summary.summary,
         summary_id=str(summary.id),
         n_summarized=summary.n_summarized,
+    )
+
+
+async def gather_memory_context(
+    inputs: GatherMemoryContextInput,
+) -> GatherMemoryContextOutput:
+    chat_id = inputs["chat_id"]
+    memory_service = await ChatMemoryService.create()
+
+    history = await memory_service.retrieve_history(chat_id)
+    summaries = await memory_service.get_all_summaries(chat_id)
+
+    if not history:
+        message_repository = MessagesRepository()
+        db_messages = await wrap_in_session(
+            message_repository.get_messages_by_chat_id,
+            session=None,
+            chat_id=chat_id,
+        )
+        history: list[RedisChatHistoryMessage] = [
+            RedisChatHistoryMessage(
+                **{
+                    "id": str(message.id),
+                    "role": message.role.value,
+                    "message": message.content,
+                }
+            )
+            for message in db_messages
+        ]
+
+    if not summaries:
+        summary_repository = ConversationMemoryRepository()
+        db_summary = await wrap_in_session(
+            summary_repository.get_summary_by_chat_id,
+            session=None,
+            chat_id=chat_id,
+        )
+        if db_summary is not None:
+            summaries = [
+                RedisConversationSummary(
+                    summary=db_summary.summary,
+                    n=db_summary.n_summarized,
+                    start_message=str(db_summary.start_message),
+                    end_message=str(db_summary.last_message),
+                )
+            ]
+
+    return GatherMemoryContextOutput(
+        history=[
+            ({"id": item.id, "role": item.role, "message": item.message})
+            for item in history
+        ],
+        summaries=[
+            {
+                "summary": item.summary,
+                "n": item.n,
+                "start_message": item.start_message,
+                "end_message": item.end_message,
+            }
+            for item in summaries
+        ],
     )
 
 

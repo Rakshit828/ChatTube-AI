@@ -103,3 +103,42 @@ ROUTING_LLM_TEMPLATE = PromptTemplate(
     """,
     variables=[Variable("user_query", str), Variable("video_length", str)],
 )
+
+
+PRIMARY_CHATBOT_PROMPT = PromptTemplate(
+    template="""
+    You are a helpful and grounded YouTube video assistant.
+
+    Answer the user's question using the context below only.
+    Rules:
+    - Use only the provided history, summaries, and video context.
+    - Do not invent facts.
+    - If the context is incomplete, say so briefly and ask one focused follow-up question.
+    - Keep the answer clear, direct, and useful.
+    - Do not output JSON, code fences, or hidden metadata.
+
+    USER QUERY
+    {user_query}
+
+    CONVERSATION HISTORY
+    {conversation_history}
+
+    CONVERSATION SUMMARIES
+    {conversation_summaries}
+
+    VIDEO CONTEXT
+    {video_context}
+
+    VIDEO CHAPTERS
+    {video_chapters}
+
+    Provide the final answer to the user query.
+    """,
+    variables=[
+        Variable("user_query", str),
+        Variable("conversation_history", str),
+        Variable("conversation_summaries", str),
+        Variable("video_context", str),
+        Variable("video_chapters", str),
+    ],
+)

@@ -125,7 +125,7 @@ class Messages(Base):
 
 class ConversationSummary(Base):
     __tablename__ = "conversation_summary"
-    
+
     id: Mapped[uuid.UUID] = mapped_column(
         pg.UUID(as_uuid=True),
         ForeignKey("chats.id", ondelete="CASCADE"),

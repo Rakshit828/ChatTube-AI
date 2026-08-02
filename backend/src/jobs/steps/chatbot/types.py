@@ -73,3 +73,12 @@ class StoreConversationSummaryOutput(TypedDict):
     summary: str
     summary_id: str
     n_summarized: int
+
+
+class GatherMemoryContextInput(TypedDict):
+    chat_id: str
+
+
+class GatherMemoryContextOutput(TypedDict):
+    history: list[dict[str, str]]
+    summaries: list[dict[str, str | int]]

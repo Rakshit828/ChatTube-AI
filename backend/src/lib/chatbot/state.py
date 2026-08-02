@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from src.lib.weviate_db.types import YoutubeInfoCollectionObject
-
+from src.models.redis import ChatHistoryMessageObject, ConversationSummary
 
 class RoutingState(BaseModel):
     requires_past_history: bool
@@ -20,5 +20,5 @@ class AgentState(RoutingState):
     raw_user_query: str
     prompt: str
     video_chunks: list[YoutubeInfoCollectionObject]
-    message_history: list[str]
-    summaries: list[str]
+    message_history: list[ChatHistoryMessageObject]
+    summaries: list[ConversationSummary]

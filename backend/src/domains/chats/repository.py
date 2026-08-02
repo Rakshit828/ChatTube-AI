@@ -289,9 +289,27 @@ class ConversationMemoryRepository:
         self,
         session: AsyncSession,
         chat_id: str,
-    ) -> list[ConversationSummary] | None:
-        stmt = select(ConversationSummary).where(
-            ConversationSummary.id == uuid.UUID(chat_id)
+    ) -> ConversationSummary | None:
+        """Returns the latest summary of the chat."""
+        stmt = (
+            select(ConversationSummary)
+            .where(ConversationSummary.id == uuid.UUID(chat_id))
+            .order_by(ConversationSummary.created_at.desc())
+            .limit(1)
         )
         result = await session.execute(stmt)
-        return [summary for summary in result.scalars().all()]
+        return result.scalar_one_or_none()
+
+    async def get_summaries_by_chat_id(
+        self,
+        session: AsyncSession,
+        chat_id: str,
+    ) -> list[ConversationSummary]:
+        """Returns all the summaries of the chat."""
+        stmt = (
+            select(ConversationSummary)
+            .where(ConversationSummary.id == uuid.UUID(chat_id))
+            .order_by(ConversationSummary.created_at.desc())
+        )
+        result = await session.execute(stmt)
+        return list(result.scalars().all())

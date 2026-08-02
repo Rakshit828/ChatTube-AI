@@ -6,14 +6,19 @@ from ..config import InngestEventsEnum
 from src.jobs.steps.chatbot.steps import (
     routing_llm,
     get_video_context_from_vdb,
+    gather_memory_context,
 )
 from src.jobs.steps.chatbot.types import (
     RoutingLLMInput,
     RoutingLLMOutput,
     GetVideoContextFromVdbInput,
     GetVideoContextFromVdbOutput,
+    GatherMemoryContextInput,
+    GatherMemoryContextOutput,
 )
+
 from src.lib.chatbot.state import RoutingState, AgentState
+from src.models.redis import ChatHistoryMessageObject, ConversationSummary
 from src.db.redis_db import publish_workflow_status
 from src.jobs.utils import SPLITTER
 from src.lib.weviate_db.types import SearchTypeEnum
@@ -79,6 +84,22 @@ async def chatbot_workflow(ctx: inngest.Context) -> None:
             )
             data = retrieval_output["data"]
             agent_state.video_chunks = data
+
+        if routing_state.requires_past_history:
+            memory_context: GatherMemoryContextOutput = await step.run(
+                step_id="gather-memory-context",
+                handler=lambda: gather_memory_context(
+                    inputs=GatherMemoryContextInput(chat_id=chat_id)
+                ),
+            )
+            agent_state.message_history = [
+                ChatHistoryMessageObject.model_validate(message)
+                for message in memory_context["history"]
+            ]
+            agent_state.summaries = [
+                ConversationSummary.model_validate(summary)
+                for summary in memory_context["summaries"]
+            ]
 
     except inngest.NonRetriableError as e:
         logger.error("StepError occurred. Details are : %s", e.message)
