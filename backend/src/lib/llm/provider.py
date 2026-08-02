@@ -50,7 +50,7 @@ class ProviderConfig:
 def GroqProvider(api_key: str, model: Optional[str] = None) -> ProviderConfig:
     """Groq (https://console.groq.com) -- OpenAI-compatible endpoint."""
     models = [
-        "openai-gpt-oss-120b",
+        "openai/gpt-oss-120b",
         "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant",
         "mixtral-8x7b-32768",

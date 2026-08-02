@@ -35,7 +35,6 @@ from src.lib.chatbot.utils import (
 @inngest_client.create_function(
     fn_id="chatbot-workflow",
     trigger=inngest.TriggerEvent(event=InngestEventsEnum.CHATBOT_QUERY),
-    idempotency="event.data.chat_id",
 )
 async def chatbot_workflow(ctx: inngest.Context) -> None:
     logger = ctx.logger
@@ -75,9 +74,18 @@ async def chatbot_workflow(ctx: inngest.Context) -> None:
                 inputs=RoutingLLMInput(user_query=str(user_query), video_length=None)
             ),
         )
-        routing_state = RoutingState.model_validate(routing_response)
+        routing_state = RoutingState.model_validate(routing_response["state"])
+        logger.info("Routing state is : %s", routing_state)
 
-        if routing_state.requires_video_chunks_retrieval:
+        agent_state.requires_past_history = routing_state.requires_past_history
+        agent_state.requires_video_chapters = routing_state.requires_video_chapters
+        agent_state.requires_video_chunks_retrieval = (
+            routing_state.requires_video_chunks_retrieval
+        )
+        agent_state.start_time = routing_state.start_time
+        agent_state.end_time = routing_state.end_time
+
+        if agent_state.requires_video_chunks_retrieval:
             retrieval_output: GetVideoContextFromVdbOutput = await step.run(
                 step_id="get-video-context-from-vdb",
                 handler=lambda: get_video_context_from_vdb(
@@ -93,7 +101,7 @@ async def chatbot_workflow(ctx: inngest.Context) -> None:
             data = retrieval_output["data"]
             agent_state.video_chunks = data
 
-        if routing_state.requires_past_history:
+        if agent_state.requires_past_history:
             memory_context: GatherMemoryContextOutput = await step.run(
                 step_id="gather-memory-context",
                 handler=lambda: gather_memory_context(

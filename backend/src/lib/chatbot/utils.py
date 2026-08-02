@@ -35,7 +35,7 @@ def format_video_context(context: list[YoutubeInfoCollectionObject]) -> str:
 
     lines: list[str] = []
     for index, chunk in enumerate(context, start=1):
-        text = str(chunk.get("text") or chunk.get("content") or "").strip()
+        text = str(chunk.get("chunk") or chunk.get("content") or "").strip()
         start = str(chunk.get("start") or chunk.get("start_time") or "").strip()
         end = str(chunk.get("end") or chunk.get("end_time") or "").strip()
         label = f"TIMESTAMP [{start} - {end}]"

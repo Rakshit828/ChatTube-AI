@@ -12,6 +12,7 @@ class Variable(Generic[T]):
     name: str
     type_: type[T]
     description: str | None = None
+    required: bool = True
 
 
 class PromptTemplate:
@@ -43,7 +44,11 @@ class PromptTemplate:
             raise ValueError(f"Variables declared but unused: {sorted(unused)}")
 
     def render(self, **kwargs: Any) -> str:
-        missing = set(self.variables) - kwargs.keys()
+        missing = {
+            name
+            for name, variable in self.variables.items()
+            if variable.required and name not in kwargs
+        }
         if missing:
             raise ValueError(f"Missing variables: {sorted(missing)}")
 
@@ -51,18 +56,35 @@ class PromptTemplate:
         if extra:
             raise ValueError(f"Unexpected variables: {sorted(extra)}")
 
+        values: dict[str, Any] = {}
         for name, variable in self.variables.items():
-            if variable.type_ is object:
+            if name not in kwargs:
+                if variable.required:
+                    continue
+                values[name] = ""
                 continue
 
-            if not isinstance(kwargs[name], variable.type_):
+            value = kwargs[name]
+            if variable.type_ is object:
+                values[name] = value
+                continue
+
+            if value is None:
+                if variable.required:
+                    raise TypeError(f"'{name}' cannot be None")
+                values[name] = ""
+                continue
+
+            if not isinstance(value, variable.type_):
                 raise TypeError(
                     f"'{name}' must be "
                     f"{variable.type_.__name__}, "
-                    f"got {type(kwargs[name]).__name__}"
+                    f"got {type(value).__name__}"
                 )
 
-        return self.template.format(**kwargs)
+            values[name] = value
+
+        return self.template.format(**values)
 
 
 ROUTING_LLM_TEMPLATE = PromptTemplate(
@@ -89,19 +111,19 @@ ROUTING_LLM_TEMPLATE = PromptTemplate(
     # Output Format 
     A json containing the above decisions like:
     {{
-        requires_past_history: true
-        requires_video_chunks_retrieval: true
-        requires_video_chapters: true
-        start_time: Optional[str] = None 
-        end_time: Optional[str] = "30:00"
+        "requires_past_history" : true
+        "requires_video_chunks_retrieval" : true
+        "requires_video_chapters" : true
+        "start_time" : null
+        "end_time" : "30:00"
     }}
 
-    Strictly return json only. No extra text. No markdown format. Just Json.
+    Return the pure json string as a output. No extra text. No markdown formatting. Just Json string that can be parsed by python program.
     
     QUERY: {user_query}
     VIDEO_LENGTH: {video_length}
     """,
-    variables=[Variable("user_query", str), Variable("video_length", str)],
+    variables=[Variable("user_query", str), Variable("video_length", str, required=False)],
 )
 
 
@@ -136,9 +158,9 @@ PRIMARY_CHATBOT_PROMPT = PromptTemplate(
     """,
     variables=[
         Variable("user_query", str),
-        Variable("conversation_history", str),
-        Variable("conversation_summaries", str),
-        Variable("video_context", str),
-        Variable("video_chapters", str),
+        Variable("conversation_history", str, required=False),
+        Variable("conversation_summaries", str, required=False),
+        Variable("video_context", str, required=False),
+        Variable("video_chapters", str, required=False),
     ],
 )

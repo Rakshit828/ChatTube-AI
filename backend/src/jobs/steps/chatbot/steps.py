@@ -50,7 +50,7 @@ async def routing_llm(inputs: RoutingLLMInput) -> RoutingLLMOutput:
     )
 
     provider = GroqProvider(
-        api_key=CONFIG.GROQ_API_KEY, model="llama-3.3-70b-versatile"
+        api_key=CONFIG.GROQ_API_KEY, model="openai/gpt-oss-120b"
     )
     llm_service = LLMService(provider=provider)
 
@@ -71,7 +71,7 @@ async def routing_llm(inputs: RoutingLLMInput) -> RoutingLLMOutput:
     try:
         payload = json.loads(content)
     except json.JSONDecodeError as exc:
-        raise inngest.NonRetriableError(message=f"Error occurred: {exc}")
+        raise inngest.NonRetriableError(message=f"Error occurred: {exc.msg}")
 
     state = RoutingState.model_validate(payload)
     state_dict = cast(RoutingStateData, state.model_dump())
