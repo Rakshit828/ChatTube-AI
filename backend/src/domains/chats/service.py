@@ -29,6 +29,13 @@ class ChatsService:
             )
 
             if chat is None:
-                raise 
+                raise
 
         return video, chat
+
+    async def get_chat_by_id(
+        self,
+        session: AsyncSession,
+        chat_id: str,
+    ) -> Chats | None:
+        return await self._chats_repo.get_chat_by_id(session=session, chat_id=chat_id)

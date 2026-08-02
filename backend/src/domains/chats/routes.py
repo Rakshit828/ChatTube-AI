@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from src.domains.auth.dependencies import AccessTokenBearer
 from typing import Dict, Any
-from .types import CreateNewChatRecordModel, CreateNewChatResponseModel
+from .types import (
+    CreateNewChatRecordModel,
+    CreateNewChatResponseModel,
+    TriggerChatbotQueryModel,
+)
 from .service import ChatsService
 from src.db.postgres.setup import get_session
 from src.db.postgres.schemas import VideoProcessingStatusEnum
@@ -66,6 +70,47 @@ async def create_new_chat_record(
     return SuccessResponse[CreateNewChatResponseModel](
         message="Chat and video created successfully.",
         data=data,
+    )
+
+
+@chats_router.post("/query")
+async def trigger_chatbot_query(
+    payload: TriggerChatbotQueryModel,
+    decoded_token: Dict[str, Any] = Depends(AccessTokenBearer().check),
+    chats_service: ChatsService = Depends(ChatsService),
+    session: AsyncSession = Depends(get_session),
+) -> SuccessResponse[dict[str, str]]:
+    """Queue an existing chat for the chatbot workflow."""
+    del decoded_token
+
+    chat = await chats_service.get_chat_by_id(session=session, chat_id=payload.chat_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found.")
+
+    video_id = payload.video_id or str(chat.yt_video_id)
+
+    await inngest_client.send(
+        events=[
+            inngest.Event(
+                name=InngestEventsEnum.CHATBOT_QUERY,
+                data={
+                    "chat_id": str(payload.chat_id),
+                    "video_id": str(video_id),
+                    "user_query": payload.user_query,
+                },
+            )
+        ]
+    )
+
+    return SuccessResponse[
+        dict[str, str]
+    ](
+        message="Chatbot workflow triggered successfully.",
+        data={
+            "chat_id": str(payload.chat_id),
+            "video_id": str(video_id),
+            "status": "queued",
+        },
     )
 
 

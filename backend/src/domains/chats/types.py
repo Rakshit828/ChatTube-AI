@@ -7,6 +7,12 @@ class CreateNewChatRecordModel(BaseModel):
     chat_title: str
 
 
+class TriggerChatbotQueryModel(BaseModel):
+    chat_id: str
+    user_query: str
+    video_id: str | None = None
+
+
 class CreateNewChatResponseModel(BaseModel):
     video_id: str 
     chat_id: str 

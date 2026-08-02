@@ -8,6 +8,4 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-inngest_client = inngest.Inngest(
-    app_id="vidagent-inngest-fastapi", logger=logger, signing_key="sdkfj3247w3"
-)
+inngest_client = inngest.Inngest(app_id="vidagent-inngest-fastapi", logger=logger)

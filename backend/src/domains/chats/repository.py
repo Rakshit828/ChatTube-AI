@@ -119,6 +119,15 @@ class ChatsRepository:
 
         return chat if chat is not None else None
 
+    async def get_chat_by_id(
+        self,
+        session: AsyncSession,
+        chat_id: str,
+    ) -> Chats | None:
+        stmt = select(Chats).where(Chats.id == chat_id)
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
 
 class MessagesRepository:
     async def create_new_message_record(
