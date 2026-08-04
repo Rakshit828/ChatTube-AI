@@ -24,6 +24,7 @@ from src.models.redis import (
     ChatHistoryMessageObject as RedisChatHistoryMessage,
 )
 from src.utils import wrap_in_session
+from src.models.redis import ChatHistoryMessageObject
 
 from .types import (
     CreateNewMessageRecordInput,
@@ -40,6 +41,8 @@ from .types import (
     StoreConversationSummaryOutput,
     SummarizeConversationInput,
     SummarizeConversationOutput,
+    UpdateMemoryHistoryInput,
+    UpdateMemoryHistoryOutput,
 )
 
 
@@ -49,9 +52,7 @@ async def routing_llm(inputs: RoutingLLMInput) -> RoutingLLMOutput:
         video_length=inputs["video_length"],
     )
 
-    provider = GroqProvider(
-        api_key=CONFIG.GROQ_API_KEY, model="openai/gpt-oss-120b"
-    )
+    provider = GroqProvider(api_key=CONFIG.GROQ_API_KEY, model="openai/gpt-oss-120b")
     llm_service = LLMService(provider=provider)
 
     try:
@@ -271,6 +272,25 @@ async def primary_llm(inputs: PrimaryLLMInput) -> str:
         await llm_service.close()
 
     return answer
+
+
+async def update_memory_history(
+    inputs: UpdateMemoryHistoryInput,
+) -> UpdateMemoryHistoryOutput:
+    memory = await ChatMemoryService.create()
+    length, is_summary_triggered = await memory.save_memory_history(
+        chat_id=inputs["chat_id"],
+        message_data=ChatHistoryMessageObject(
+            **{
+                "message_id": inputs["message_id"],
+                "message": inputs["message"],
+                "role": inputs["role"],
+            }
+        ),
+    )
+    return UpdateMemoryHistoryOutput(
+        history_length=length, is_summary_triggered=is_summary_triggered
+    )
 
 
 async def create_new_message_record(

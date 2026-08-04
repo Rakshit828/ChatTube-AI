@@ -8,6 +8,8 @@ from src.jobs.steps.chatbot.steps import (
     get_video_context_from_vdb,
     gather_memory_context,
     primary_llm,
+    create_new_message_record,
+    update_memory_history,
 )
 from src.jobs.steps.chatbot.types import (
     RoutingLLMInput,
@@ -17,11 +19,14 @@ from src.jobs.steps.chatbot.types import (
     GatherMemoryContextInput,
     GatherMemoryContextOutput,
     PrimaryLLMInput,
+    CreateNewMessageRecordInput,
+    UpdateMemoryHistoryInput,
 )
 
 from src.lib.chatbot.state import RoutingState, AgentState
 from src.models.redis import ChatHistoryMessageObject, ConversationSummary
 from src.db.redis_db import publish_workflow_status
+from src.db.postgres.schemas import MessageRoleEnum
 from src.jobs.utils import SPLITTER
 from src.lib.weviate_db.types import SearchTypeEnum
 from src.lib.chatbot.prompts import PRIMARY_CHATBOT_PROMPT
@@ -132,6 +137,31 @@ async def chatbot_workflow(ctx: inngest.Context) -> None:
                 inputs=PrimaryLLMInput(
                     chat_id=chat_id,
                     prompt=prompt,
+                )
+            ),
+        )
+
+        save_message_output = await step.run(
+            step_id="save-message-record-in-db",
+            handler=lambda: create_new_message_record(
+                inputs=CreateNewMessageRecordInput(
+                    chat_id=chat_id,
+                    content=primary_response,
+                    role=MessageRoleEnum.ASSISTANT,
+                    tokens=len(primary_response.split()),
+                    should_commit=True,
+                )
+            ),
+        )
+
+        await step.run(
+            step_id="update-memory-history",
+            handler=lambda: update_memory_history(
+                inputs=UpdateMemoryHistoryInput(
+                    chat_id=chat_id,
+                    message_id=save_message_output["message_id"],
+                    message=primary_response,
+                    role=MessageRoleEnum.ASSISTANT,
                 )
             ),
         )

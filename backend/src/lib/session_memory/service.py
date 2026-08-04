@@ -53,9 +53,11 @@ class ChatMemoryService:
             ]
         )
 
-    async def save(
-        self, chat_id: str, message_data: ChatHistoryMessageObject | dict[str, Any]
-    ):
+    async def save_memory_history(
+        self, chat_id: str, message_data: ChatHistoryMessageObject 
+    ) -> tuple[int, bool]:
+        """Appends the message into memory history and triggers summary if necessary."""
+        triggered_summary: bool = False 
         key: str = self.build_key(chat_id=chat_id)
         serialized = self._get_json_str(message_data)
         length: int = await self._redis_client.lpush(key, serialized)
@@ -63,6 +65,9 @@ class ChatMemoryService:
         if length > self.max_total_message:
             await self._trigger_summary(chat_id=chat_id, current_length=length)
             await self._redis_client.ltrim(key, 0, self.max_total_message - 1)
+            triggered_summary = True
+
+        return length, triggered_summary
 
     async def remove_history(self, chat_id: str) -> None:
         key: str = self.build_key(chat_id=chat_id)

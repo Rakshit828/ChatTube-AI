@@ -6,7 +6,7 @@ CHAT_HISTORY_KEY: str = "chat:{chat_id}:history"
 
 
 class ChatHistoryMessageObject(BaseModel):
-    id: str
+    message_id: str
     message: str
     role: str
 

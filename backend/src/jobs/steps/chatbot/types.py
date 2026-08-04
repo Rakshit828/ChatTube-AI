@@ -22,6 +22,16 @@ class RoutingLLMOutput(TypedDict):
     prompt: str
 
 
+class UpdateMemoryHistoryInput(TypedDict):
+    chat_id: str 
+    message_id: str
+    message: str
+    role: str
+
+class UpdateMemoryHistoryOutput(TypedDict):
+    history_length: int 
+    is_summary_triggered: bool 
+
 class GetVideoContextFromVdbInput(TypedDict):
     video_id: str
     field: str
