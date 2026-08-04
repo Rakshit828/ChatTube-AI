@@ -12,7 +12,10 @@ import inngest.fast_api
 from src.services.inngest_client import inngest_client
 from src.jobs.workflows.video_workflows import process_video_workflow
 from src.jobs.workflows.chatbot_workflow import chatbot_workflow
-from src.jobs.workflows.chat_workflows import conversation_summary_workflow
+from src.jobs.workflows.chat_workflows import (
+    chat_message_persistence_workflow,
+    conversation_summary_workflow,
+)
 from src.lib.weviate_db.client import WeaviateClient
 
 load_dotenv()
@@ -105,7 +108,12 @@ app.include_router(auth_routes, tags=["Authentication"], prefix=f"/api/{VERSION}
 inngest.fast_api.serve(
     app=app,
     client=inngest_client,
-    functions=[process_video_workflow, chatbot_workflow, conversation_summary_workflow],
+    functions=[
+        process_video_workflow,
+        chatbot_workflow,
+        chat_message_persistence_workflow,
+        conversation_summary_workflow,
+    ],
     serve_path="/api/inngest",
 )
 
